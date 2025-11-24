@@ -34,6 +34,6 @@ function sendMessage() {
 
 </script>
 
-<style lang="css" scoped>
+<style lang="scss" scoped>
 @import "../scss/components/_messagePanel.scss"
 </style>
