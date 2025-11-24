@@ -1,0 +1,1 @@
+<!-- handler of the exit btn -->
