@@ -1,6 +1,6 @@
 <template>
     <header class="header">
-        <h1 class="header__company-name">Софт Инжиниринг</h1>
+        <h1 class="header__company-name">{{ companyName }}</h1>
         <div class="header__divider"></div>
         <h1 class="header__job-title-timer">
             {{ jobTitle }} 
@@ -40,6 +40,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 
 const jobTitle = 'Junior Frontend-разработчик'
+const companyName = 'Т1'
 
 const timer = ref('00:00:00')
 let seconds = 0
