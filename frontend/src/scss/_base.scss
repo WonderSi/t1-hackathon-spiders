@@ -20,3 +20,28 @@ html,
     background: $clr-light-bg;
     overflow-x: hidden;
 }
+
+.main-layout {
+    display: flex;
+    width: 100%;
+    height: calc(100vh - $header-max-height);
+    box-sizing: border-box;
+    gap: $space-16px;
+    padding: $space-16px;
+}
+
+.chat {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    min-width: 61px;
+    height: 100%;
+    gap: $space-16px;
+}
+
+.code-window {
+    flex: 2;
+    box-sizing: border-box;
+    background: $clr-light-card;
+    border-radius: $radius-1;
+}

@@ -20,5 +20,23 @@
 </script>
 
 <style lang="scss">
-@use "../scss/components/_codeWindow.scss";
+@use '../scss/_variables.scss' as *;
+
+.code-window {
+    flex: 2;
+    box-sizing: border-box;
+    background: $clr-light-card;
+    border-radius: $radius-1;
+}
+
+.code-window-header {
+    margin-bottom: 16px;
+    border-bottom: 1px solid #d9c8b8;
+}
+
+.code-window-content {
+    flex: 1 1 auto;
+    padding-top: 16px;
+    overflow-y: auto;
+}
 </style>

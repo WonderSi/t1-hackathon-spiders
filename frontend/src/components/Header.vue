@@ -66,5 +66,103 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
-@import "../scss/components/_header.scss"
+@use '../scss/_variables.scss' as *;
+
+.header {
+    display: flex;
+    flex-direction: row;
+
+    align-items: center;
+    justify-content: space-between;
+    gap: 28px;
+
+    width: 100vw;
+    min-height: 50px;
+    height: 100px;
+    box-sizing: border-box;
+    padding: 0 50px;
+    background: $clr-light-main;
+}
+
+.header__company-name {
+    font-family: $font-sans;
+    font-size: $font-size-header;
+    font-weight: 200;
+    color: $clr-light-header-font;
+    line-height: 1.22;
+    flex-shrink: 0;
+    min-width: 0;
+    margin: 0;
+}
+
+.header__divider {
+    width: 6px;
+    height: calc(100px - 2 * 16px);
+    background: $clr-light-header-font;
+    border-radius: $radius-1;
+    flex-shrink: 0;
+}
+
+.header__job-title-timer {
+    font-family: $font-sans;
+    font-size: $font-size-header;
+    font-weight: 900;
+    color: $clr-light-header-font;
+    line-height: 1.22;
+    margin: 0;
+    text-align: center;
+    min-width: 0;
+    flex-grow: 1;
+}
+
+.header__timer {
+    letter-spacing: 2px;
+    font-weight: 100;
+}
+
+.header_attachments {
+    display: flex;
+    flex-direction: row;
+    gap: 24px;
+    height: 62px;
+    align-items: center;
+}
+
+.attachment {
+    width: 65px;
+    height: 79px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.attachment svg {
+    width: 53px;
+    height: 63px;
+    display: block;
+    margin: 0 auto;
+    border-radius: 10px;
+    flex-shrink: 0;
+}
+
+.attachment label {
+    font-family: $font-sans;
+    font-size: $font-size-base;
+    font-weight: 400;
+    color: $clr-light-header-font;
+    text-align: center;
+    margin-top: 4px;
+}
+
+.attachment-bg {
+    background: $clr-light-header-font;
+    border: 1px solid $clr-light-main;
+    border-radius: 10px;
+    width: 52px;
+    height: 62px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 </style>

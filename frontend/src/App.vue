@@ -2,7 +2,7 @@
   <Header />
   <div class="main-layout">
     <div class="left-side">
-      <TaskBar />
+
       <Chat />
     </div>
     <CodeWindow />
@@ -12,11 +12,9 @@
 <script setup lang="ts">
 import Header from './components/Header.vue';
 import Chat from './components/Chat.vue';
-import TaskBar from './components/TaskBar.vue';
 import CodeWindow from './components/CodeWindow.vue';
 </script>
 
 <style lang="scss">
 @use "./scss/_base.scss";
-@use "./scss/_layout.scss";
 </style>
