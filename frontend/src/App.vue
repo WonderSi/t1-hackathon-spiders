@@ -1,5 +1,5 @@
 <template>
-  <div id="app">
+  <div id="app" class="app-container">
     <Chat />
   </div>
 </template>
@@ -8,5 +8,6 @@
 import Chat from './components/Chat.vue';
 </script>
 
-<style scoped lang="scss">
+<style lang="scss">
+@use "./scss/_base.scss";
 </style>
