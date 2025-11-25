@@ -1,6 +1,5 @@
 <template>
   <div id="app">
-    <h1>Hackathon</h1>
     <MessagePanel />
   </div>
 </template>

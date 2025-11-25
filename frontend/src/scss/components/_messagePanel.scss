@@ -1,11 +1,10 @@
-@import '../_variables.scss';
-
 // class="chat__message-panel
 // class="chat__input-message"
 // class="chat__btn-send"
 // class="chat__sent-button SVG
 // class="chat__spinner"
 // class="chat__error"
+@use '../_variables.scss' as *;
 
 .chat__message-panel {
     display: flex;
@@ -16,39 +15,44 @@
     padding: $space-16px;
     gap: $space-16px;
     max-width: $container-max-chat;
-    // margin: $space-16px auto $space-16px auto; 
     position: sticky;
-
-    @media (max-width: $bp-sm) {
-        padding: $space-5px;
-        gap: $space-5px;
-    }
 }
 
 .chat__input-message {
-    flex: 1 1 auto;
+    border: none !important;
+    border-radius: $radius-2;
+    outline: none !important;
+    resize: none;
+    margin: 0;
+
+    min-height: 1.5em; // 1 line with line-height
+    max-height: calc(1.5em * 10 + 2px); // 10 lines
+    // padding достаточен от родителя, поэтому тут нет
+
     font-family: $font-sans;
     font-size: $font-size-base;
     line-height: $line-height-base;
-    background: $clr-light-bg;
-    border: none;
-    border-radius: $radius-2;
-    padding: $space-8 $space-16px;
+
+    background: $clr-light-card;
     color: $clr-light-main;
     transition: box-shadow $transition-fast;
-    box-shadow: 0 0 0 2px transparent;
+    flex: 1 1 auto;
+    box-shadow: none;
+    box-sizing: border-box;
+
+    overflow-y: hidden; // <= 10 lines
 
     &:focus {
         box-shadow: 0 0 0 2px $clr-light-accent;
-        outline: none;
+        outline: none !important;
     }
 }
 
 .chat__btn-send {
     background: $clr-light-accent;
     border: none;
-    border-radius: $btn-send-radius;
-    padding: $space-5px $space-16px;
+    border-radius: $radius-round;
+    padding: 8.5px 7px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -66,29 +70,17 @@
     }
 }
 
+// color for the sent-svg arrow
+.chat__sent-button path {
+  fill: $clr-light-main;
+}
+
 .chat__sent-button {
     width: 18px;
     height: 15px;
     fill: $clr-light-main;
     flex-shrink: 0;
     pointer-events: none;
-}
-
-.chat__spinner {
-    margin-left: $space-16px;
-    color: $clr-light-main;
-    font-size: 1em;
-    animation: spinnerRotate 1s linear infinite;
-
-    @keyframes spinnerRotate {
-        0% {
-            transform: rotate(0);
-        }
-
-        100% {
-            transform: rotate(360deg);
-        }
-    }
 }
 
 .chat__error {
