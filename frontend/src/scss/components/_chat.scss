@@ -1,0 +1,30 @@
+@use '../_variables.scss' as *;
+
+.chat {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+
+    max-width: $container-max-chat;
+    height: calc(100vh - $header-max-height); // высота без header
+    box-sizing: border-box;
+
+    margin-bottom: $space-16px;
+
+    background: $clr-light-card;
+}
+
+.chat__content {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: $space-16px;
+    /* Messages будут рендериться тут */
+}
+
+.chat__message-panel {
+    width: 100%;
+    padding: $space-16px;
+    background: $clr-light-card;
+    box-sizing: border-box;
+    box-shadow: $shadow;
+}

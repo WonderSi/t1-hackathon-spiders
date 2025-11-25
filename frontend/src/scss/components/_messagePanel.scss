@@ -1,9 +1,3 @@
-// class="chat__message-panel
-// class="chat__input-message"
-// class="chat__btn-send"
-// class="chat__sent-button SVG
-// class="chat__spinner"
-// class="chat__error"
 @use '../_variables.scss' as *;
 
 .chat__message-panel {
@@ -14,7 +8,8 @@
     box-shadow: $shadow;
     padding: $space-16px;
     gap: $space-16px;
-    max-width: $container-max-chat;
+    width: 100%;
+    box-sizing: border-box;
     position: sticky;
 }
 

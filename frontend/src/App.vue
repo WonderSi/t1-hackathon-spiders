@@ -1,11 +1,11 @@
 <template>
   <div id="app">
-    <MessagePanel />
+    <Chat />
   </div>
 </template>
 
 <script setup lang="ts">
-import MessagePanel from './components/MessagePanel.vue'
+import Chat from './components/Chat.vue';
 </script>
 
 <style scoped lang="scss">
