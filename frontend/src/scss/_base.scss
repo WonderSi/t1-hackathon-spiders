@@ -1,7 +1,22 @@
 @use './_variables.scss' as *;
 
-body, html, #app, .app-container {
-  background: $clr-light-bg;
-  min-height: 100vh;
-  width: 100vw;
+#app {
+    min-width: 0;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+body,
+html,
+#app {
+    height: 100vh;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    background: $clr-light-bg;
+    overflow-x: hidden;
 }

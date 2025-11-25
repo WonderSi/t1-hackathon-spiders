@@ -1,0 +1,50 @@
+@use '../_variables.scss' as *;
+
+.task-bar {
+    height: 100%;
+    width: 100%;
+    background: #edeae2;
+    border-radius: 16px 0 0 16px;
+    box-shadow: 0 0 8px rgba(80, 80, 80, 0.06);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 18px 0;
+    box-sizing: border-box;
+}
+
+.task-bar-header {
+    font-size: 1.1em;
+    margin-bottom: 24px;
+    color: #583a23;
+    font-weight: bold;
+}
+
+.task-bar-items {
+    display: flex;
+    flex-direction: column;
+    gap: $space-16px;
+    flex: 1;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.task-bar-item {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #c8b8a8;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.15em;
+    transition: background 0.2s;
+    cursor: pointer;
+}
+
+.task-bar-item.active,
+.task-bar-item:hover {
+    background: #a49381;
+}

@@ -8,6 +8,7 @@
     box-shadow: $shadow;
     padding: $space-16px;
     gap: $space-16px;
+    
     width: 100%;
     box-sizing: border-box;
     position: sticky;
@@ -22,7 +23,6 @@
 
     min-height: 1.5em; // 1 line with line-height
     max-height: calc(1.5em * 10 + 2px); // 10 lines
-    // padding достаточен от родителя, поэтому тут нет
 
     font-family: $font-sans;
     font-size: $font-size-base;
