@@ -1,0 +1,32 @@
+@use './_variables.scss' as *;
+
+#app {
+    min-width: 0;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+body,
+html,
+#app {
+    height: 100vh;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    background: $clr-light-bg;
+    overflow-x: hidden;
+}
+
+.main-layout {
+    display: flex;
+    width: 100%;
+    height: calc(100vh - $header-max-height);
+    box-sizing: border-box;
+    gap: $space-16px;
+    padding: $space-16px;
+    overflow: hidden;
+}

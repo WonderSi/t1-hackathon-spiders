@@ -1,0 +1,71 @@
+@import url('https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;700&family=Inter:wght@400;700&display=swap');
+
+// ===== Palette: Light (defaults)
+$clr-light-bg: #D3CEC1;
+$clr-light-card: #FFFFFF;
+$clr-light-accent: #C39E88;
+$clr-light-main: #55463F;
+
+$clr-light-task-focus: #E4C7B8;
+$clr-light-accent-hover: #FADDCB;
+$clr-light-main-hover: #B89382;
+
+
+$clr-light-ui-task-error-text: #6A1515;
+$clr-light-ui-error-bg: #DC8383;
+$clr-light-ui-code-error-text: #D13333;
+
+$clr-light-ui-task-passed-text: #2E4B2A;
+$clr-light-ui-passed-bg: #B0CE9D;
+$clr-light-ui-code-passed-text: #35842A;
+
+$clr-light-header-font: #FFFFFF;
+
+    // ===== Spacing IN PX 
+$space-5px: 5px !default;
+$space-16px: 16px !default;
+$space-32px: 32px !default;
+$space-50px: 50px !default;
+
+// ===== Radii
+$radius-1: 12px !default;
+$radius-2: 6px !default;
+$radius-round: 999px !default;
+
+// ===== Typography
+$font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji" !default;
+$font-mono: "Inconsolata", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", "Courier New" !default;
+$font-size-base: 14px !default;
+$font-size-header: 36px !default;
+$font-size-task-item: 32px !default;
+$line-height-base: 1.5 !default;
+$heading-weight: 700 !default;
+
+// ===== Shadow; only on message panel
+$shadow: 0px 0px 2px rgba(85, 70, 63, 0.5) !default;
+
+// ===== Breakpoints
+$bp-sm: 480px !default;
+$bp-md: 768px !default;
+$bp-lg: 1024px !default;
+$bp-xl: 1280px !default;
+
+// ===== Layout tokens
+$container-max-taskbar: 950px !default;
+$container-max-chat: 913px !default; 
+$container-max-code: 1187px !default;
+
+$task-inbar-max: 51px !default;
+$header-max-height: 100px !default;
+$code-bar-max-height: 60px !default;
+
+$btn-send-radius: 6px !default;
+
+// ===== Z-index
+$z-header: 1000 !default;
+$z-overlay: 1050 !default;
+$z-modal: 1100 !default;
+
+// ===== Focus/animation
+$transition-fast: 150ms !default;
+$transition-base: 220ms !default;
