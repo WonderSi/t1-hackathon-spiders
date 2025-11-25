@@ -4,7 +4,7 @@
         <div class="header__divider"></div>
         <h1 class="header__job-title-timer">
             {{ jobTitle }} 
-            <span class="header__timer">— {{ timer }}</span>
+            <span class="header__timer"> — {{ timer }}</span>
         </h1>
         <div class="header__divider"></div>
         <div class="header_attachments">
@@ -71,12 +71,12 @@ onUnmounted(() => {
 .header {
     display: flex;
     flex-direction: row;
-
+    
     align-items: center;
     justify-content: space-between;
     gap: 28px;
 
-    width: 100vw;
+    width: 100%;
     min-height: 50px;
     height: 100px;
     box-sizing: border-box;
@@ -86,7 +86,7 @@ onUnmounted(() => {
 
 .header__company-name {
     font-family: $font-sans;
-    font-size: $font-size-header;
+    font-size: clamp(1.5rem, 2.5vw, $font-size-header);
     font-weight: 200;
     color: $clr-light-header-font;
     line-height: 1.22;
@@ -96,7 +96,7 @@ onUnmounted(() => {
 }
 
 .header__divider {
-    width: 6px;
+    width: 3px;
     height: calc(100px - 2 * 16px);
     background: $clr-light-header-font;
     border-radius: $radius-1;
@@ -105,7 +105,7 @@ onUnmounted(() => {
 
 .header__job-title-timer {
     font-family: $font-sans;
-    font-size: $font-size-header;
+    font-size: clamp(1.2rem, 2vw, $font-size-header);
     font-weight: 900;
     color: $clr-light-header-font;
     line-height: 1.22;
@@ -123,14 +123,13 @@ onUnmounted(() => {
 .header_attachments {
     display: flex;
     flex-direction: row;
-    gap: 24px;
+    gap: 16px;
     height: 62px;
     align-items: center;
 }
 
 .attachment {
     width: 65px;
-    height: 79px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -138,8 +137,9 @@ onUnmounted(() => {
 }
 
 .attachment svg {
-    width: 53px;
-    height: 63px;
+    width: 100%;
+    max-height: 63px;
+    max-width: 53px;
     display: block;
     margin: 0 auto;
     border-radius: 10px;
@@ -153,16 +153,5 @@ onUnmounted(() => {
     color: $clr-light-header-font;
     text-align: center;
     margin-top: 4px;
-}
-
-.attachment-bg {
-    background: $clr-light-header-font;
-    border: 1px solid $clr-light-main;
-    border-radius: 10px;
-    width: 52px;
-    height: 62px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 </style>

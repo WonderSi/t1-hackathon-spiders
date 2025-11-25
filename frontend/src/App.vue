@@ -1,10 +1,7 @@
 <template>
   <Header />
   <div class="main-layout">
-    <div class="left-side">
-
-      <Chat />
-    </div>
+    <Chat />
     <CodeWindow />
   </div>
 </template>
