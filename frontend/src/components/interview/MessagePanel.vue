@@ -28,38 +28,41 @@
 
 import { ref, nextTick } from 'vue';
 
-const userMessage = ref('');
+const userMessage = ref<string>('');
 const textareaRef = ref<HTMLTextAreaElement | null>(null);
 const maxLines = 10;
 
-const loading = ref(false);
-const error = ref ('');
+const loading = ref<boolean>(false);
+const error = ref<string>('');
 
-// adjusting for amount of lines
-function resizeTextArea() {
+function resizeTextArea(): void {
   const textarea = textareaRef.value;
-  if (textarea) {
-    textarea.style.height = 'auto';
-    const lineHeight = parseFloat(getComputedStyle(textarea).lineHeight) || 22; // px
-    const lines = textarea.value.split('\n').length;
-    // Ограничиваем максимальную высоту textarea
-    const maxHeight = lineHeight * maxLines;
-    textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`;
-    // Если строк больше maxLines, появляется скролл
-    textarea.style.overflowY = (textarea.scrollHeight > maxHeight) ? 'auto' : 'hidden';
-  }
+  if (!textarea) { return }
+
+  textarea.style.height = 'auto';
+
+  const computedStyle: CSSStyleDeclaration = getComputedStyle(textarea)
+  const lineHeight = parseFloat(computedStyle.lineHeight) || 22; // px
+  const lines = textarea.value.split('\n').length;
+  const maxHeight = lineHeight * maxLines;
+  
+  textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`;
+  textarea.style.overflowY = (textarea.scrollHeight > maxHeight) ? 'auto' : 'hidden';
+
 }
 
 // send to AI
-async function sendMessage() {
-    const message = userMessage.value.trim();
+async function sendMessage(): Promise<void> {
+    const message: string = userMessage.value.trim();
     if (!message) return;
+
     loading.value = true;
     error.value='';
+    
     try {
-        await new Promise(res => setTimeout(res, 1000)); // demo
+        await new Promise<void>(res => setTimeout(res, 1000)); // demo
         userMessage.value = '';
-    } catch (e) {
+    } catch (e: unknown) {
         error.value = 'Ошибка отправки сообщения';
 
     } finally {
@@ -69,61 +72,47 @@ async function sendMessage() {
     await nextTick();
     resizeTextArea();
 }
-
 </script>
 
 <style lang="scss" scoped>
+
 .chat__message-panel {
+    position: sticky;
+    width: 100%;
     display: flex;
     align-items: center;
+    gap: $space-16px;
+    padding: $space-16px;
     background: $clr-light-card;
     border-radius: $radius-1;
     box-shadow: $shadow;
-    padding: $space-16px;
-    gap: $space-16px;
-    
-    width: 100%;
     box-sizing: border-box;
-    position: sticky;
 }
 
 .chat__input-message {
-    border: none !important;
-    border-radius: $radius-2;
-    outline: none !important;
-    resize: none;
-    margin: 0;
-
     min-height: 1.5em; // 1 line with line-height
     max-height: calc(1.5em * 10 + 2px); // 10 lines
-
+    flex: 1 1 auto;
     font-family: $font-sans;
     font-size: $font-size-base;
     line-height: $line-height-base;
-
     background: $clr-light-card;
     color: $clr-light-main;
-    transition: box-shadow $transition-fast;
-    flex: 1 1 auto;
-    box-shadow: none;
+    border-radius: $radius-2;
     box-sizing: border-box;
-
     overflow-y: hidden; // <= 10 lines
+    transition: box-shadow $transition-fast;
 
-    &:focus {
-        box-shadow: 0 0 0 2px $clr-light-accent;
-        outline: none !important;
-    }
 }
 
 .chat__btn-send {
-    background: $clr-light-accent;
-    border: none;
-    border-radius: $radius-round;
-    padding: 8.5px 7px;
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 8.5px 7px;
+    background: $clr-light-accent;
+    border: none;
+    border-radius: $radius-round;
     transition: background $transition-fast;
     cursor: pointer;
 
@@ -152,11 +141,11 @@ async function sendMessage() {
 }
 
 .chat__error {
-    color: $clr-light-ui-task-error-text;
-    background: $clr-light-ui-error-bg;
-    border-radius: $radius-2;
-    padding: $space-5px $space-16px;
     margin-left: $space-16px;
+    padding: $space-5px $space-16px;
     font-size: 0.95em;
+    background: $clr-light-ui-error-bg;
+    color: $clr-light-ui-task-error-text;
+    border-radius: $radius-2;
 }
 </style>
