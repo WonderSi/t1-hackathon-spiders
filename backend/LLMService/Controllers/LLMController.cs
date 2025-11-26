@@ -30,7 +30,12 @@ public class LLMController(ILLMService llmService, ILogger<LLMController> logger
     {
         try
         {
+            // ✅ Теперь передаём и taskId, и сложность задачи (если известна)
+            // В реальном сценарии, сложность задачи должна быть передана от InterviewService
+            // или извлекаться из сессии.
+            // Для упрощения, предположим, что сложность передаётся.
             var score = await llmService.AssessSolutionAsync(request.TaskDescription, request.Solution, request.Language);
+            // НЕТУ БОЛЬШЕ вызова CalculateAdaptiveDifficultyAsync здесь, если вы хотите отделить оценку и адаптацию
             return Ok(score);
         }
         catch (Exception ex)
@@ -40,6 +45,44 @@ public class LLMController(ILLMService llmService, ILogger<LLMController> logger
         }
     }
 
+    [HttpPost("submit-solution")]
+    public async Task<ActionResult<SubmissionResult>> SubmitSolution([FromBody] SubmissionRequest request)
+    {
+        try
+        {
+            // 1. Оценить решение
+            var score = await llmService.AssessSolutionAsync(request.TaskDescription, request.Solution, request.Language);
+
+            // 2. Обновить адаптивность (передаём сложность задачи, на которой получили оценку)
+            var adaptiveRequest = new AdaptiveDifficultyRequest
+            {
+                SessionId = request.SessionId,
+                CurrentTaskId = request.TaskId,
+                SubmittedSolution = request.Solution,
+                Score = score,
+                Performance = score >= 4.0 ? "Correct" : score >= 2.0 ? "Partially" : "Incorrect",
+                CurrentDifficulty = request.TaskDifficulty // ✅ Передаём сложность задачи
+            };
+
+            var newDifficulty = await llmService.CalculateAdaptiveDifficultyAsync(adaptiveRequest);
+
+            // 3. Определить грейд
+            var grade = await llmService.DetermineCandidateGradeAsync(request.SessionId);
+
+            return Ok(new SubmissionResult
+            {
+                Score = score,
+                NewDifficulty = newDifficulty,
+                Grade = grade
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error submitting solution for task: {TaskId}", request.TaskId);
+            return StatusCode(500, new { error = "Internal server error during solution submission." });
+        }
+    }
+    
     [HttpPost("calculate-adaptive-difficulty")]
     public async Task<ActionResult<float>> CalculateAdaptiveDifficulty([FromBody] AdaptiveDifficultyRequest request)
     {
