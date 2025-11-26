@@ -30,5 +30,6 @@
     overflow-y: auto;
     scrollbar-width: thin;
     scrollbar-color: $clr-light-accent transparent;
+    color: $clr-light-main;
 }
 </style>
