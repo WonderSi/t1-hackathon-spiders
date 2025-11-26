@@ -3,6 +3,25 @@ using LLMService.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000", "https://localhost:3000") // адрес фронтенда
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+        // .AllowCredentials(); // Раскомментируйте, если есть куки/авторизацию
+    });
+
+    // (Опционально) Политика для разработки (все источники, опасно!)
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+        // .AllowCredentials(); // Не рекомендуется с AllowAnyOrigin!
+    });
+});
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -30,6 +49,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+
+app.UseCors("AllowFrontend");
 
 app.MapControllers();
 
