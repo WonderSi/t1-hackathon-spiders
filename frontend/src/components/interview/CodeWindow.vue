@@ -16,6 +16,7 @@
                 </label>
             </div>
         </div>
+
         <div class="code-window-content">
             <CodeEditor
                 v-model:value="code" 
@@ -24,16 +25,17 @@
                 :options="editorOptions" 
             />
         </div>
+
         <div class="code-window-footer">
             <div class="status-info">
-                <span v-if="passedStatus"
-                :class="['status-badge', passedStatusClass]">
-                {{ passedStatus }}
-            </span>
+                <span class="attempt-counter">
+                    Попытка: {{ submitionAttempts }}
+                </span>
 
-            <span class="attempt-counter">
-                Попытка: {{ submitionAttempts }}
-            </span>
+                <span v-if="passedStatus"
+                    :class="['status-badge', passedStatusClass]">
+                    {{ passedStatus }}
+                </span>
             </div>
 
             <button 
@@ -46,14 +48,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { CodeEditor, type EditorOptions } from 'monaco-editor-vue3'
 
 const code = ref<string>('');
 const selectedLanguage = ref<string>('python');
 const selectedTheme = ref<string>('vs');
 
-const submitionAttempts = ref<string>('');
+const submitionAttempts = ref<number>(0);
+const isSubmitting = ref<boolean>(false);
 const passedStatus = ref<string>('');
 
 const editorOptions = {
@@ -64,7 +67,40 @@ const editorOptions = {
     wordWrap: 'on',               // перенос длинных строк
 }
 
+const passedStatusClass = computed (() => {
+    if (passedStatus.value === 'Засчитано!') return 'status-success';
+    if (passedStatus.value === 'Не засчитано') return 'status-error';
+    return '';
+});
+
 const onLanguageChange = () => {
+    passedStatus.value = '';
+}
+
+const onCodeChange = () => {
+    if (passedStatus.value) passedStatus.value = '';
+}
+
+const handleSubmit = async () => {
+    if (isSubmitting.value) return;
+
+    submitionAttempts.value++;
+    isSubmitting.value = true;
+    passedStatus.value = 'Проверка...';
+
+    try {
+        // Имитация запроса к API (здесь будет fetch/axios)
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        // заглушка для проверки статусов:
+        const isSuccess = Math.random() > 0.5;
+        passedStatus.value = isSuccess ? 'Засчитано!' : 'Не засчитано';
+    } catch (e) {
+        console.error(e);
+        passedStatus.value = 'Не засчитано';
+    } finally {
+        isSubmitting.value = false;
+    }
+
 }
 </script>
 
@@ -99,6 +135,7 @@ const onLanguageChange = () => {
         gap: 16px;
         font-size: 14px;
         font-family: $font-sans;
+        color: $clr-light-main;
     }
 
     select {
@@ -108,7 +145,9 @@ const onLanguageChange = () => {
         background: $clr-light-card;
         cursor: pointer;
         font-family: $font-sans;
+        font-weight: 900;
         box-shadow: $shadow;
+        color: $clr-light-main;
     }
 }
 
@@ -133,7 +172,13 @@ const onLanguageChange = () => {
         align-items: center;
         gap: 16px;
         font-family: $font-sans;
-        font-size: $font-size-base
+        font-size: $font-size-base;
+
+        .attempt-counter {
+            font-family: $font-sans;
+            font-size: $font-size-base;
+            color: $clr-light-main;
+        }
     }
 
     .code-window-submit-btn {

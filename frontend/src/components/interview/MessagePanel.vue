@@ -92,18 +92,28 @@ async function sendMessage(): Promise<void> {
 .chat__input-message {
     min-height: 1.5em; // 1 line with line-height
     max-height: calc(1.5em * 10 + 2px); // 10 lines
+    
     flex: 1 1 auto;
+
     font-family: $font-sans;
     font-size: $font-size-base;
+
     line-height: $line-height-base;
+
     background: $clr-light-card;
     color: $clr-light-main;
     border-radius: $radius-2;
+    
     box-sizing: border-box;
     overflow-y: hidden; // <= 10 lines
     transition: box-shadow $transition-fast;
     scrollbar-width: thin;
     scrollbar-color: $clr-light-accent transparent;
+
+    &::placeholder {
+        color: $clr-light-main;
+        opacity: 0.8;
+    }
 }
 
 .chat__btn-send {
