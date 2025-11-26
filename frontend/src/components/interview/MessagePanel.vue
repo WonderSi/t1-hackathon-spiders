@@ -7,7 +7,7 @@
             @input="resizeTextArea"
             :rows="1"
             ref="textareaRef"
-            @keyup.enter="sendMessage"
+            @keydown.enter="handleEnter"
         ></textarea>
         <button 
             class="chat__btn-send" 
@@ -52,6 +52,15 @@ function resizeTextArea(): void {
   
   textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`;
   textarea.style.overflowY = (textarea.scrollHeight > maxHeight) ? 'auto' : 'hidden';
+}
+
+function handleEnter(e: KeyboardEvent) {
+    if (e.shiftKey) {
+        nextTick(() => resizeTextArea());
+        return;
+    }
+    e.preventDefault();
+    sendMessage();
 }
 
 // send to AI
