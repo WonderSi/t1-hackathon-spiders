@@ -23,11 +23,11 @@
 
                 <div class="upload-area" @click="triggerFileInput">
                     <input type="file" ref="fileInput" class="hidden-input" @change="handleFileChange"
-                        accept=".pdf,.doc,.docx" />
+                        accept=".md,.txt,.doc,.docx" />
 
                     <div v-if="!selectedFile" class="upload-placeholder">
                         <p>Нажмите для выбора файла</p>
-                        <span>(PDF, DOCX)</span>
+                        <span>(.txt, .docx, .md)</span>
                     </div>
 
                     <div v-else class="file-info">
