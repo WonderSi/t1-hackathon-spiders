@@ -29,6 +29,6 @@
     padding-inline: 16px;
     overflow-y: auto;
     scrollbar-width: thin;
-    scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+    scrollbar-color: $clr-light-accent transparent;
 }
 </style>

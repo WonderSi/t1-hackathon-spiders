@@ -102,7 +102,8 @@ async function sendMessage(): Promise<void> {
     box-sizing: border-box;
     overflow-y: hidden; // <= 10 lines
     transition: box-shadow $transition-fast;
-
+    scrollbar-width: thin;
+    scrollbar-color: $clr-light-accent transparent;
 }
 
 .chat__btn-send {
