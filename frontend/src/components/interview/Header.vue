@@ -3,7 +3,7 @@
         <h1 class="header__company-name">{{ companyName }}</h1>
         <div class="header__divider"></div>
         <h1 class="header__job-title-timer">
-            {{ jobTitle }} 
+            {{ jobGrade }} {{ jobTitle }}
             <span class="header__timer"> — {{ timer }}</span>
         </h1>
         <div class="header__divider"></div>
@@ -39,7 +39,8 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 
-const jobTitle = 'Junior Frontend-разработчик'
+const jobTitle = 'Frontend-разработчик'
+const jobGrade = 'Junior'
 const companyName = 'Т1'
 
 const timer = ref('00:00:00')
