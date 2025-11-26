@@ -6,20 +6,27 @@
         <span>Обнаружена подозрительная активность</span>
       </div>
       <ul class="violations-list">
-        <li v-for="(violation, index) in violations" :key="index">
+        <li v-for="(violation, index) in visibleViolations" :key="index">
           {{ violation }}
         </li>
       </ul>
+      <div v-if="violations.length > 5" class="more-violations">
+        ...и еще {{ violations.length - 5 }}
+      </div>
     </div>
   </Transition>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 
 const props = defineProps<{
   violations: string[]
 }>()
+
+const visibleViolations = computed(() => {
+  return props.violations.slice(-5)
+})
 
 const isVisible = ref(false)
 let hideTimer: ReturnType<typeof setTimeout> | null = null
@@ -43,14 +50,22 @@ watch(() => props.violations, (newVal) => {
   margin-bottom: 6px;
 }
 
+.more-violations {
+    font-family: $font-mono;
+    font-size: 12px;
+    color: $clr-light-main;
+    opacity: 0.7;
+    margin-top: 8px;
+    padding-left: 20px;
+}
+
 .anti-cheat-warning {
   position: fixed;
   top: 20px;
   right: 20px;
   background: #fff3cd;
-  border: 2px solid #ffc107;
   border-radius: 8px;
-  padding: 16px;
+  padding: 24px;
   max-width: 400px;
   z-index: 1000;
   box-shadow: $shadow;
