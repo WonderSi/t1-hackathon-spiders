@@ -105,7 +105,7 @@ onUnmounted(() => {
     font-weight: 100;
     font-variant-numeric: tabular-nums; 
     font-family: $font-mono;
-    font-size: 18px;
+    font-size: clamp(1.2rem, 2vw, $font-size-header);
 }
 
 .header_attachments {
