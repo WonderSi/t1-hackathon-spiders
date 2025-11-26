@@ -51,23 +51,56 @@ const renderMarkdown = (text: string) => md.render(text)
 const messages = ref<ChatMessage[]>([
     { 
         role: 'ai', 
-        content: '# Привет!\nЯ готов провести **интервью**.\n\nВот пример кода на Vue:\n``````' 
+        content: `# Привет!
+Я готов провести **интервью**.
+
+Вот пример многострочного кода на Vue 3 (Composition API):
+
+\`\`\`vue
+<${""}script setup lang="ts">
+import { ref } from 'vue';
+
+const count = ref<number>(0);
+
+function increment() {
+  count.value++;
+}
+<${""}/script>
+
+<${""}template>
+  <button @click="increment">
+    Счетчик: {{ count }}
+  </button>
+<${""}/template>
+
+<${""}style lang="scss" scoped>
+button {
+  background-color: #42b883;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+
+  &:hover {
+    opacity: 0.9;
+  }
+}
+<${""}/style>
+\`\`\`` 
     },
     { role: 'user', content: 'Привет, давай начнем.' },
-    { role: 'ai', content: 'Отлично. Расскажи, чем `ref` отличается от `reactive`?' }
+    { role: 'ai', content: 'Отлично. Расскажи, чем \`ref\` отличается от \`reactive\`?' }
 ])
 
-// --- Логика отправки с заглушкой ---
 const addMessage = (text: string) => {
-    // 1. Добавляем сообщение юзера
     messages.value.push({ role: 'user', content: text })
     scrollToBottom()
 
-    // 2. Имитация задержки ответа AI
     setTimeout(() => {
         messages.value.push({
             role: 'ai',
-            content: 'Это отличный вопрос! Давай я немного подумаю...\n\nА пока держи еще кусок кода:\n``````'
+            content: 'Это отличный вопрос! Давай я немного подумаю...\n\nА пока держи еще кусок кода:\n```\n'
         })
         scrollToBottom()
     }, 1500)
@@ -123,8 +156,10 @@ const scrollToBottom = async () => {
     &--ai {
         align-self: flex-start;
         background-color: $clr-light-card;
-        border-bottom: 1px solid $clr-light-accent;
+        border-left: 0px solid $clr-light-accent;
+        border-right: 1px solid $clr-light-accent;
         border-top: 1px solid $clr-light-accent;
+        border-bottom: 1px solid $clr-light-accent;
     }
 
     &--user {
@@ -144,12 +179,12 @@ const scrollToBottom = async () => {
     li { margin-bottom: 0.2em; }
     
     code:not(pre code) {
-        background-color: rgba(0, 0, 0, 0.06);
+        background-color: rgba($clr-light-accent, 0.2);
         padding: 2px 4px;
         border-radius: 4px;
         font-family: 'Fira Code', monospace;
         font-size: 0.9em;
-        color: #d63384;
+        color: $clr-light-code-md;
     }
 
     pre {
@@ -157,13 +192,13 @@ const scrollToBottom = async () => {
         padding: 12px;
         border-radius: 8px;
         overflow-x: auto;
-        background: #282c34;
+        background: $clr-light-main;
         
         code {
             font-family: 'Fira Code', monospace;
             background: transparent;
             padding: 0;
-            color: #abb2bf; // Светло-серый цвет фона кода
+            color: $clr-light-card;
         }
     }
     
