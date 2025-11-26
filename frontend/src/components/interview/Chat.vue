@@ -14,8 +14,6 @@ import MessagePanel from './MessagePanel.vue'
 </script>
 
 <style lang="scss" scoped>
-@use '../scss/_variables.scss';
-
 .chat {
     height: 100%;
     flex: 1;
