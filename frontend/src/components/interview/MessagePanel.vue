@@ -7,7 +7,7 @@
             @input="resizeTextArea"
             :rows="1"
             ref="textareaRef"
-            @keyup.enter="sendMessage"
+            @keydown.enter="handleEnter"
         ></textarea>
         <button 
             class="chat__btn-send" 
@@ -28,6 +28,10 @@
 
 import { ref, nextTick } from 'vue';
 
+const emit = defineEmits<{
+    (e: 'send', message: string): void
+}>();
+
 const userMessage = ref<string>('');
 const textareaRef = ref<HTMLTextAreaElement | null>(null);
 const maxLines = 10;
@@ -42,13 +46,21 @@ function resizeTextArea(): void {
   textarea.style.height = 'auto';
 
   const computedStyle: CSSStyleDeclaration = getComputedStyle(textarea)
-  const lineHeight = parseFloat(computedStyle.lineHeight) || 22; // px
+  const lineHeight = parseFloat(computedStyle.lineHeight) || 22;
   const lines = textarea.value.split('\n').length;
   const maxHeight = lineHeight * maxLines;
   
   textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`;
   textarea.style.overflowY = (textarea.scrollHeight > maxHeight) ? 'auto' : 'hidden';
+}
 
+function handleEnter(e: KeyboardEvent) {
+    if (e.shiftKey) {
+        nextTick(() => resizeTextArea());
+        return;
+    }
+    e.preventDefault();
+    sendMessage();
 }
 
 // send to AI
@@ -60,15 +72,13 @@ async function sendMessage(): Promise<void> {
     error.value='';
     
     try {
-        await new Promise<void>(res => setTimeout(res, 1000)); // demo
+        emit('send', message);
         userMessage.value = '';
     } catch (e: unknown) {
         error.value = 'Ошибка отправки сообщения';
-
     } finally {
         loading.value = false;
     }
-    userMessage.value = '';
     await nextTick();
     resizeTextArea();
 }

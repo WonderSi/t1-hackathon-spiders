@@ -23,8 +23,8 @@ const jobTitle = 'Frontend-разработчик'
 const jobGrade = 'Junior'
 const companyName = 'Т1'
 
-const timer = ref('00:00:00')
-let seconds = 0
+const timer = ref('01:00:00')
+let remainingSeconds = 3600 
 let intervalId: number | null = null
 
 function formatTime(sec: number) {
@@ -35,10 +35,16 @@ function formatTime(sec: number) {
 }
 
 onMounted(() => {
-  intervalId = window.setInterval(() => {
-    seconds++
-    timer.value = formatTime(seconds)
-  }, 1000)
+    timer.value = formatTime(remainingSeconds)
+
+    intervalId = window.setInterval(() => {
+        if (remainingSeconds > 0) {
+            remainingSeconds--
+            timer.value = formatTime(remainingSeconds)
+        } else {
+            if (intervalId) clearInterval(intervalId)
+        }
+    }, 1000)
 })
 
 onUnmounted(() => {
@@ -95,8 +101,11 @@ onUnmounted(() => {
 }
 
 .header__timer {
-    letter-spacing: 2px;
+    letter-spacing: 1px;
     font-weight: 100;
+    font-variant-numeric: tabular-nums; 
+    font-family: $font-mono;
+    font-size: clamp(1.2rem, 2vw, $font-size-header);
 }
 
 .header_attachments {

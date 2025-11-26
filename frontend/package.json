@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "axios": "^1.13.2",
+    "highlight.js": "^11.11.1",
+    "markdown-it": "^14.1.0",
     "monaco-editor": "^0.55.1",
     "monaco-editor-vue3": "^1.0.4",
     "pinia": "^3.0.4",
@@ -20,6 +22,7 @@
     "vue-router": "4"
   },
   "devDependencies": {
+    "@types/markdown-it": "^14.1.2",
     "@types/node": "^24.10.1",
     "@typescript-eslint/eslint-plugin": "^8.47.0",
     "@typescript-eslint/parser": "^8.47.0",

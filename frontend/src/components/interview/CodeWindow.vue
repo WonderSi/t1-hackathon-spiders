@@ -27,7 +27,6 @@
             </div>
         </div>
 
-        <!-- вынести в хедер? -->
         <AntiCheatWarning :violations="violations" />
 
         <div class="code-window-content">
@@ -45,7 +44,7 @@
         <div class="code-window-footer">
             <div class="status-info">
                 <span class="attempt-counter">Попытка: {{ submitionAttempts }}</span>
-                <span class="integrity-score">Оригинальность: {{ integrityScore }}%</span>
+                <span class="integrity-score" :class="integrityScoreClass">Оригинальность: {{ integrityScore }}%</span>
 
                 <span v-if="passedStatus" :class="['status-badge', passedStatusClass]">
                     {{ passedStatus }}
@@ -108,6 +107,18 @@ const integrityScore = computed(() => {
     return analyzeCodeOriginality(code.value).originalityScore
 })
 
+const integrityScoreClass = computed(() => {
+    const score = integrityScore.value;
+    
+    if (score >= 75) {
+        return 'score-high';
+    } else if (score >= 51) {
+        return 'score-medium';
+    } else {
+        return 'score-low';
+    }
+});
+
 const onEditorMount = (editor: any) => {
     editorInstance.value = editor
 
@@ -154,8 +165,8 @@ type Language = 'javascript' | 'typescript' | 'kotlin' | 'java' | 'kotlin' | 'py
 const STATUS_MESSAGES = {
     IDLE: '',
     CHECKING: 'Проверка...',
-    SUCCESS: 'Засчитано!',
-    FAILED: 'Не засчитано',
+    SUCCESS: 'Решено!',
+    FAILED: 'Неправильно :(',
     ERROR: 'Ошибка сети'
 } as const;
 
@@ -387,12 +398,24 @@ const handleSubmit = async (): Promise<void> => {
             font-family: $font-sans;
             font-size: $font-size-base;
             color: $clr-light-main;
+            padding-right: 16px;
+            border-right: 2px solid $clr-light-accent;
         }
 
         .integrity-score {
             font-family: $font-sans;
             font-size: $font-size-base;
             color: $clr-light-main;
+            transition: color 0.3s ease; // Плавная смена цвета
+            &.score-high {
+                color: $clr-light-ui-code-passed-text;
+            }
+            &.score-medium {
+                color: $clr-light-ui-warning;
+            }
+            &.score-low {
+            color: $clr-light-ui-code-error-text;
+            }
         }
     }
 
@@ -417,6 +440,4 @@ const handleSubmit = async (): Promise<void> => {
         }
     }
 }
-
-.integrity-score {}
 </style>
