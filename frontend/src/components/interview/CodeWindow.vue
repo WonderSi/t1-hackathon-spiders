@@ -417,6 +417,4 @@ const handleSubmit = async (): Promise<void> => {
         }
     }
 }
-
-.integrity-score {}
 </style>
