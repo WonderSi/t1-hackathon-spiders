@@ -19,11 +19,12 @@
 
         <div class="code-window-content">
             <CodeEditor
-                v-model:value="code" 
-                :language="selectedLanguage" 
+                :key="selectedLanguage"
+                v-model:value="code"
+                :language="selectedLanguage"
                 :theme="selectedTheme"
-                :options="editorOptions" 
-            />
+                :options="editorOptions"
+                @change="onCodeChange" />
         </div>
 
         <div class="code-window-footer">
@@ -32,17 +33,13 @@
                     Попытка: {{ submitionAttempts }}
                 </span>
 
-                <span v-if="passedStatus"
-                    :class="['status-badge', passedStatusClass]">
+                <span v-if="passedStatus" :class="['status-badge', passedStatusClass]">
                     {{ passedStatus }}
                 </span>
             </div>
 
-            <button 
-                class="code-window-submit-btn"
-                @click="handleSubmit"
-                :disabled="isSubmitting"
-            >{{ isSubmitting ? 'Отправка...' : 'Отправить' }}</button>
+            <button class="code-window-submit-btn" @click="handleSubmit" :disabled="isSubmitting">{{ isSubmitting ?
+                'Отправка...' : 'Отправить' }}</button>
         </div>
     </div>
 </template>
@@ -51,13 +48,27 @@
 import { ref, computed } from 'vue'
 import { CodeEditor, type EditorOptions } from 'monaco-editor-vue3'
 
-const code = ref<string>('');
-const selectedLanguage = ref<string>('python');
-const selectedTheme = ref<string>('vs');
+type Language = 'javascript' | 'typescript' | 'kotlin' | 'java' | 'kotlin' | 'python' | 'cpp' | 'go';
 
-const submitionAttempts = ref<number>(0);
+const STATUS_MESSAGES = {
+    IDLE: '',
+    CHECKING: 'Проверка...',
+    SUCCESS: 'Засчитано!',
+    FAILED: 'Не засчитано',
+    ERROR: 'Ошибка сети'
+} as const;
+
+type StatusMessage = typeof STATUS_MESSAGES[keyof typeof STATUS_MESSAGES];
+
+const code = ref<string>('print("Hello World")');
+
+const selectedLanguage = ref<Language>('python');
+const selectedTheme = ref<string>('vs'); // по факту const, можем добавить больше тем в будущем если также внедрим их для всей страницы
+
+const submitionAttempts = ref<number>(0); 
 const isSubmitting = ref<boolean>(false);
-const passedStatus = ref<string>('');
+
+const passedStatus = ref<StatusMessage>(STATUS_MESSAGES.IDLE);
 
 const editorOptions = {
     automaticLayout: true,        // автоподстройка под размер контейнера
@@ -65,38 +76,61 @@ const editorOptions = {
     minimap: { enabled: false },  // убрать миникарту справа
     scrollBeyondLastLine: false,
     wordWrap: 'on',               // перенос длинных строк
+    renderValidationDecorations: 'on'
 }
 
-const passedStatusClass = computed (() => {
-    if (passedStatus.value === 'Засчитано!') return 'status-success';
-    if (passedStatus.value === 'Не засчитано') return 'status-error';
-    return '';
+const templates: Record<Language, string> = {
+    javascript: `console.log('Hello JS');`,
+    typescript: `const greeting: string = 'Hello TS';\nconsole.log(greeting);`,
+    python: `print("Hello Python")`,
+    java: `public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello Java");\n    }\n}`,
+    cpp: `#include <iostream>\n\nint main() {\n    std::cout << "Hello C++" << std::endl;\n    return 0;\n}`,
+    go: `package main\n\nimport "fmt"\n\nfunc main() {\n    fmt.Println("Hello Go")\n}`,
+    kotlin: `fun main() {\n    println("Hello Kotlin")\n}`
+};
+
+const passedStatusClass = computed((): string => {
+    switch (passedStatus.value) {
+        case STATUS_MESSAGES.SUCCESS: return 'status-success';
+        case STATUS_MESSAGES.FAILED: return 'status-failed';
+        case STATUS_MESSAGES.ERROR: return 'status-error'
+        default: return ''; 
+    }
 });
 
-const onLanguageChange = () => {
-    passedStatus.value = '';
+const onLanguageChange = (): void => {
+    passedStatus.value = STATUS_MESSAGES.IDLE;
+
+    const currentCodeIsTemplate = Object.values(templates).includes(code.value);
+    const codeIsEmpty = !code.value || !code.value.trim();
+
+    if (codeIsEmpty || currentCodeIsTemplate) {
+        code.value = templates[selectedLanguage.value || ''];
+    }   
 }
 
-const onCodeChange = () => {
-    if (passedStatus.value) passedStatus.value = '';
+const onCodeChange = (value?: string): void => {
+    if (passedStatus.value !== STATUS_MESSAGES.IDLE) {
+        passedStatus.value = STATUS_MESSAGES.IDLE
+    }
 }
 
-const handleSubmit = async () => {
+const handleSubmit = async (): Promise<void> => {
     if (isSubmitting.value) return;
 
     submitionAttempts.value++;
     isSubmitting.value = true;
-    passedStatus.value = 'Проверка...';
+    passedStatus.value = STATUS_MESSAGES.CHECKING;
 
     try {
-        // Имитация запроса к API (здесь будет fetch/axios)
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        // заглушка для проверки статусов:
-        const isSuccess = Math.random() > 0.5;
-        passedStatus.value = isSuccess ? 'Засчитано!' : 'Не засчитано';
-    } catch (e) {
+        await new Promise(resolve => setTimeout(resolve, 1500)); // Имитация запроса к API (здесь будет fetch/axios)
+
+        const isSuccess = Math.random() > 0.5; // заглушка для проверки статусов:
+
+        passedStatus.value = isSuccess ? STATUS_MESSAGES.SUCCESS : STATUS_MESSAGES.FAILED;
+    } catch (e: unknown) {
         console.error(e);
-        passedStatus.value = 'Не засчитано';
+        passedStatus.value = STATUS_MESSAGES.ERROR;
     } finally {
         isSubmitting.value = false;
     }
@@ -161,7 +195,7 @@ const handleSubmit = async () => {
 .code-window-footer {
     padding: $space-16px;
     border-top: 2px solid $clr-light-accent;
-    
+
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -173,6 +207,27 @@ const handleSubmit = async () => {
         gap: 16px;
         font-family: $font-sans;
         font-size: $font-size-base;
+
+        .status-badge {
+            font-size: $font-size-base;
+            font-weight: 400;
+            font-family: $font-sans;
+            border-left: 2px solid $clr-light-accent;
+            padding: 0 0 0 16px;
+
+            color: $clr-light-main;
+
+            &.status-success {
+                color: $clr-light-ui-code-passed-text;
+            }
+
+            &.status-error {
+                color: $clr-light-ui-code-error-text;
+            }
+            &.status-failed {
+                color: $clr-light-ui-code-error-text;
+            }
+        }
 
         .attempt-counter {
             font-family: $font-sans;
@@ -193,15 +248,13 @@ const handleSubmit = async () => {
         transition: opacity 0.2s;
 
         &:hover {
-        opacity: 0.9;
+            opacity: 0.9;
         }
 
         &:disabled {
-        background-color: $clr-light-accent;
-        cursor: not-allowed;
+            background-color: $clr-light-accent;
+            cursor: not-allowed;
         }
     }
 }
-.status-success { color: $clr-light-ui-code-passed-text; }
-.status-error { color: $clr-light-ui-code-error-text; }
 </style>
