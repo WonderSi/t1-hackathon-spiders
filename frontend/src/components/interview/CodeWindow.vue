@@ -173,6 +173,8 @@ const handleSubmit = async (): Promise<void> => {
     }
 
     select {
+        outline: none;
+
         padding: 4px 4px;
         border-radius: 4px;
         border: none;
