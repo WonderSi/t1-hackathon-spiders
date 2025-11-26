@@ -15,8 +15,8 @@ public class LLMService : ILLMService
 
         // Для MVP: храним сессии адаптивности и грейды в памяти
     private static readonly Dictionary<string, float> _sessionDifficulty = new();
-    private static readonly Dictionary<string, List<float>> _sessionScores = new();
-    private static readonly Dictionary<string, List<List<double>>> _codeEmbeddings = new(); // taskId -> List<Embedding>
+    private static readonly Dictionary<string, List<(float Score, float TaskDifficulty)>> _sessionScoresWithDifficulty = new();
+    private static readonly Dictionary<string, List<List<double>>> _codeEmbeddings = new();
 
     public LLMService(ISciboxClient sciboxClient, IMemoryCache cache, ILogger<LLMService> logger, IConfiguration configuration)
     {
@@ -82,7 +82,7 @@ public class LLMService : ILLMService
             var model = _configuration["Scibox:Models:General"];
             var messages = new List<ChatMessage>
             {
-                new ChatMessage("system", "Ты — технический эксперт, который оценивает решения программистов по шкале от 1 до 5. Оцени правильность, эффективность и читаемость кода. Ответь только числом от 1 до 5."),
+                new ChatMessage("system", "/no_think Ты — технический эксперт, который оценивает решения программистов по шкале от 1 до 5. Оцени правильность, эффективность и читаемость кода. Ответь ТОЛЬКО числом от 1 до 5, без объяснений, без слов, без тегов. Если код не является решением задачи, ответь 1."),
                 new ChatMessage("user", $"Задача: {taskDescription}\n\nРешение на {language}:\n{solution}\n\nОцени решение по шкале от 1 до 5, только число.")
             };
 
@@ -97,27 +97,40 @@ public class LLMService : ILLMService
             var response = await _sciboxClient.ChatCompletionAsync(sciboxRequest);
 
             var assessmentText = response.Choices[0].Message.Content;
-            // Теперь парсим только число
-            if (float.TryParse(System.Text.RegularExpressions.Regex.Match(assessmentText, @"\b[1-5]\.?\d?\b").Value, out var score))
+            
+            _logger.LogInformation("LLM Assessment Raw Response: {RawResponse}", assessmentText);
+            
+            float score = 1.0f; // Значение по умолчанию
+            bool parsed = false;
+            
+            var match = System.Text.RegularExpressions.Regex.Match(assessmentText, @"\b([1-5])(\.\d+)?\b");
+            if (match.Success && float.TryParse(match.Value, out var extractedScore))
             {
-                return score;
+                score = extractedScore;
+                parsed = true;
             }
 
-            return 3.0f; // Значение по умолчанию
+            if (!parsed)
+            {
+                _logger.LogWarning("Could not parse assessment score from LLM response: {RawResponse}", assessmentText);
+                // Оставляем score = 1.0f или другое значение по умолчанию
+            }
+
+            return score;
         }
 
         public async Task<float> CalculateAdaptiveDifficultyAsync(AdaptiveDifficultyRequest request)
         {
-            // Логика адаптации сложности на основе предыдущего результата
             var newDifficulty = request.CurrentDifficulty;
 
-            if (request.Score >= 4.0f)
+            switch (request.Score)
             {
-                newDifficulty += 0.3f; // Повысить сложность
-            }
-            else if (request.Score <= 2.0f)
-            {
-                newDifficulty -= 0.3f; // Понизить сложность
+                case >= 4.0f:
+                    newDifficulty += 0.3f; // Повысить сложность
+                    break;
+                case <= 2.0f:
+                    newDifficulty -= 0.3f; // Понизить сложность
+                    break;
             }
 
             // Ограничить диапазон
@@ -126,10 +139,10 @@ public class LLMService : ILLMService
             // Сохраняем новую сложность для сессии
             _sessionDifficulty[request.SessionId] = newDifficulty;
 
-            // Сохраняем оценку для определения грейда
-            if (!_sessionScores.ContainsKey(request.SessionId))
-                _sessionScores[request.SessionId] = new List<float>();
-            _sessionScores[request.SessionId].Add(request.Score);
+            if (!_sessionScoresWithDifficulty.ContainsKey(request.SessionId))
+                _sessionScoresWithDifficulty[request.SessionId] = new List<(float Score, float TaskDifficulty)>();
+
+            _sessionScoresWithDifficulty[request.SessionId].Add((request.Score, request.CurrentDifficulty));
 
             _logger.LogInformation("Adaptive difficulty calculated: {OldDifficulty} -> {NewDifficulty} for session {SessionId}", request.CurrentDifficulty, newDifficulty, request.SessionId);
 
@@ -138,16 +151,42 @@ public class LLMService : ILLMService
 
         public async Task<string> DetermineCandidateGradeAsync(string sessionId)
         {
-            if (!_sessionScores.TryGetValue(sessionId, out var scores) || scores.Count == 0)
-                return "Unknown";
-
-            var averageScore = scores.Average();
-
-            return averageScore switch
+            if (!_sessionScoresWithDifficulty.TryGetValue(sessionId, out var scoresAndDifficulties) || scoresAndDifficulties.Count == 0)
             {
-                >= (float)4.0 => "Senior",
-                >= (float)3.0 => "Middle",
-                >= (float)2.0 => "Junior",
+                _logger.LogWarning("No scores found for session {SessionId} when determining grade.", sessionId);
+                return "Unknown";
+            }
+
+            var totalWeightedScore = 0.0f;
+            var totalDifficultyWeight = 0.0f;
+
+            foreach (var (Score, TaskDifficulty) in scoresAndDifficulties)
+            {
+                // Используем сложность задачи как вес для оценки
+                // Например: задача сложности 4.0 и оценка 4.5 -> 4.5 * 4.0
+                totalWeightedScore += Score * TaskDifficulty;
+                totalDifficultyWeight += TaskDifficulty;
+            }
+
+            if (totalDifficultyWeight == 0)
+            {
+                _logger.LogWarning("Total difficulty weight is zero for session {SessionId}. Cannot calculate grade.", sessionId);
+                return "Unknown";
+            }
+
+            var weightedAverageScore = totalWeightedScore / totalDifficultyWeight;
+
+            _logger.LogInformation("Calculated weighted average score for session {SessionId}: {WeightedAverageScore}", sessionId, weightedAverageScore);
+
+            return weightedAverageScore switch
+            {
+                >= 4.7f => "Expert",
+                >= 4.0f => "Senior",
+                >= 3.3f => "Senior-Junior",
+                >= 2.7f => "Middle-Senior",
+                >= 2.0f => "Middle",
+                >= 1.3f => "Junior-Middle",
+                >= 1.0f => "Junior",
                 _ => "Intern"
             };
         }
@@ -207,9 +246,7 @@ public class LLMService : ILLMService
         private async Task<List<List<double>>> GetKnownEmbeddingsForTask(string taskId)
         {
             // Для MVP: возвращаем список из памяти
-            if (_codeEmbeddings.TryGetValue(taskId, out var embeddings))
-                return embeddings;
-            return new List<List<double>>();
+            return _codeEmbeddings.TryGetValue(taskId, out var embeddings) ? embeddings : new List<List<double>>();
         }
 
         private async Task StoreCodeEmbedding(string taskId, List<double> embedding)

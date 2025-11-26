@@ -20,6 +20,7 @@
 </template>
 
 <script setup lang="ts">
+  
 import { ref, nextTick } from 'vue'
 import MessagePanel from './MessagePanel.vue'
 import MarkdownIt from 'markdown-it'
