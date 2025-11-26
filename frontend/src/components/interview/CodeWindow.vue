@@ -95,7 +95,9 @@ self.MonacoEnvironment = {
 
 const { metrics, violations } = useAntiCheat()
 
-const { startTimer, stopTimer, startTime, isTracking, formattedTime } = useSolutionTimer()
+const { startTimer, stopTimer, resetTimer, startTime, isTracking, formattedTime } = useSolutionTimer()
+
+const finalSolutionTime = ref<string | null>(null);
 
 const editorInstance = ref<any>(null)
 let lastChangeTime = Date.now()
@@ -221,6 +223,8 @@ const handleSubmit = async (): Promise<void> => {
     isSubmitting.value = true;
     passedStatus.value = STATUS_MESSAGES.CHECKING;
 
+    finalSolutionTime.value = null;
+
     const antiCheatData = {
         metrics: metrics.value,
         violations: violations.value,
@@ -231,7 +235,20 @@ const handleSubmit = async (): Promise<void> => {
     try {
         await new Promise(resolve => setTimeout(resolve, 1500)); // Имитация запроса к API (здесь будет fetch/axios)
 
+        // ВАЖНО: isSuccess придет с бэкенда НУЖНО ОБНОВИТЬ
         const isSuccess = Math.random() > 0.5; // заглушка для проверки статусов:
+
+        if (isSuccess) {
+            passedStatus.value = STATUS_MESSAGES.SUCCESS;
+            
+            finalSolutionTime.value = formattedTime.value;
+            stopTimer();
+    
+            resetTimer();
+        } else {
+            passedStatus.value = STATUS_MESSAGES.FAILED;
+        }
+
 
         passedStatus.value = isSuccess ? STATUS_MESSAGES.SUCCESS : STATUS_MESSAGES.FAILED;
     } catch (e: unknown) {
