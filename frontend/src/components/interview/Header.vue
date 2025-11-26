@@ -101,9 +101,11 @@ onUnmounted(() => {
 }
 
 .header__timer {
-    letter-spacing: 2px;
+    letter-spacing: 1px;
     font-weight: 100;
     font-variant-numeric: tabular-nums; 
+    font-family: $font-mono;
+    font-size: 18px;
 }
 
 .header_attachments {
