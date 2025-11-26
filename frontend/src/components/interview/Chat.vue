@@ -10,28 +10,25 @@
 </template>
 
 <script setup lang="ts">
-import MessagePanel from './MessagePanel.vue'
+  import MessagePanel from './MessagePanel.vue'
 </script>
 
 <style lang="scss" scoped>
 .chat {
-    height: 100%;
-    flex: 1;
     display: flex;
     flex-direction: column;
+    flex: 1;
     min-width: 0;
-    overflow: hidden;
+    height: 100%;
     background: $clr-light-card;
     border-radius: $radius-1;
+    overflow: hidden;
 }
 
 .chat__content {
-    flex: 1 1 auto;
+    padding-inline: 16px;
     overflow-y: auto;
-    padding: 16px 16px 0px 16px;
-    min-width: 0;
-    min-height: 0;
-    /* Messages будут рендериться тут */
-    background: $clr-light-card;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
 }
 </style>
