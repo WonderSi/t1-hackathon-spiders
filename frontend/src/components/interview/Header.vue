@@ -66,8 +66,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
-@use '../scss/_variables.scss' as *;
-
 .header {
     display: flex;
     flex-direction: row;

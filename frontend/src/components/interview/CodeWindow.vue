@@ -18,8 +18,6 @@
 </script>
 
 <style lang="scss">
-@use '../scss/_variables.scss' as *;
-
 .code-window {
     flex: 2;
     box-sizing: border-box;

@@ -73,9 +73,6 @@ async function sendMessage() {
 </script>
 
 <style lang="scss" scoped>
-
-@use '../scss/_variables.scss' as *;
-
 .chat__message-panel {
     display: flex;
     align-items: center;
