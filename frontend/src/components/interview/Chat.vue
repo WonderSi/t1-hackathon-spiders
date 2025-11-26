@@ -1,6 +1,6 @@
 <template>
     <div class="chat">
-        <div class="chat__content">
+        <div class="chat__content" ref="chatContentRef">
              <!-- containing AI responses -->
             <div 
                 v-for="(msg, index) in messages" 
@@ -21,16 +21,23 @@
 
 <script setup lang="ts">
   
-import { ref, nextTick } from 'vue'
+import { ref, nextTick, watch, onMounted } from 'vue'
 import MessagePanel from './MessagePanel.vue'
 import MarkdownIt from 'markdown-it'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/atom-one-dark.css'
+import { useTasks } from '@/composables/useTasks'
+import { useAssessmentStore } from '@/stores/assessment'
 
 interface ChatMessage {
   role: 'ai' | 'user';
   content: string;
 }
+
+const { currentTask } = useTasks()
+const assessmentStore = useAssessmentStore()
+
+const chatContentRef = ref<HTMLElement | null>(null)
 
 const md = new MarkdownIt({
     html: false, // защита от исполнения кода через скрипты
@@ -47,56 +54,135 @@ md.options.highlight = (str: string, lang: string): string => {
     return `<pre class="hljs"><code>${md.utils.escapeHtml(str)}</code></pre>`
 }
 
-const renderMarkdown = (text: string) => md.render(text)
+const renderMarkdown = (text: string): string => md.render(text)
 
-const messages = ref<ChatMessage[]>([
-    { 
-        role: 'ai', 
-        content: `# Привет!
-Я готов провести **интервью**.
+// const messages = ref<ChatMessage[]>([
+//     { 
+//         role: 'ai', 
+//         content: `# Привет!
+// Я готов провести **интервью**.
 
-Вот пример многострочного кода на Vue 3 (Composition API):
+// Вот пример многострочного кода на Vue 3 (Composition API):
 
-\`\`\`vue
-<${""}script setup lang="ts">
-import { ref } from 'vue';
+// \`\`\`vue
+// <${""}script setup lang="ts">
+// import { ref } from 'vue';
 
-const count = ref<number>(0);
+// const count = ref<number>(0);
 
-function increment() {
-  count.value++;
-}
-<${""}/script>
+// function increment() {
+//   count.value++;
+// }
+// <${""}/script>
 
-<${""}template>
-  <button @click="increment">
-    Счетчик: {{ count }}
-  </button>
-<${""}/template>
+// <${""}template>
+//   <button @click="increment">
+//     Счетчик: {{ count }}
+//   </button>
+// <${""}/template>
 
-<${""}style lang="scss" scoped>
-button {
-  background-color: #42b883;
-  color: white;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+// <${""}style lang="scss" scoped>
+// button {
+//   background-color: #42b883;
+//   color: white;
+//   padding: 10px 20px;
+//   border: none;
+//   border-radius: 4px;
+//   cursor: pointer;
 
-  &:hover {
-    opacity: 0.9;
+//   &:hover {
+//     opacity: 0.9;
+//   }
+// }
+// <${""}/style>
+// \`\`\`` 
+//     },
+//     { role: 'user', content: 'Привет, давай начнем.' },
+//     { role: 'ai', content: 'Отлично. Расскажи, чем \`ref\` отличается от \`reactive\`?' }
+// ])
+
+// Ключ для сохранения сообщений в localStorage
+const CHAT_STORAGE_KEY = 'interview_chat_messages' 
+
+// Инициализация сообщений с восстановлением из localStorage
+const messages = ref<ChatMessage[]>([])
+
+// ============ LOCALSTORAGE HELPERS ============
+
+// Сохранение state в localStorage
+const saveMessagesToLocalStorage  = (): void => {
+  try {
+    localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages.value));
+    console.log('State задач сохранен в localStorage');
+  } catch (error) {
+    console.error('Ошибка сохранения state задач:', error);
   }
+};
+
+// Восстановление state из localStorage
+const restoreMessagesFromLocalStorage  = (): boolean => {
+  try {
+    const savedMessages = localStorage.getItem(CHAT_STORAGE_KEY);
+    if (!savedMessages) {
+      console.log('ℹНет сохраненного state задач');
+      return false;
+    }
+
+    messages.value = JSON.parse(savedMessages);
+    console.log('Сообщения чата восстановлены из localStorage:', messages.value.length, 'сообщений')
+    return true
+  } catch (error) {
+    console.error('Ошибка восстановления state задач:', error);
+    return false;
+  }
+};
+
+// Очистка localStorage
+const clearChatLocalStorage  = (): void => {
+  localStorage.removeItem(CHAT_STORAGE_KEY);
+  console.log('State задач очищен из localStorage');
+};
+
+const formatTaskMessage = (task: any): string => {
+    return `# 📋 Задача: ${task.subject}
+
+**Сложность:** ${task.estimatedDifficulty}/5  
+**Язык:** ${assessmentStore.programmingLanguage}
+
+---
+
+## 📝 Описание
+
+${task.description}
+
+---
+
+## 💡 Пример входных данных
+
+\`\`\`
+${task.exampleInput}
+\`\`\`
+
+
+## ✅ Ожидаемый результат
+
+\`\`\`
+${task.exampleOutput}
+\`\`\`
+
+---
+
+Напиши своё решение в редакторе кода справа и отправь на проверку! 🚀`
 }
-<${""}/style>
-\`\`\`` 
-    },
-    { role: 'user', content: 'Привет, давай начнем.' },
-    { role: 'ai', content: 'Отлично. Расскажи, чем \`ref\` отличается от \`reactive\`?' }
-])
+
 
 const addMessage = (text: string) => {
     messages.value.push({ role: 'user', content: text })
     scrollToBottom()
+
+    saveMessagesToLocalStorage()
+    // ОТПРАВКА РЕШЕНИЯ / ВОПРОСА НА БЭК
+    // ПОЛУЧЕНИЕ ОЦЕНКИ / НОВОЙ ЗАДАЧИ
 
     setTimeout(() => {
         messages.value.push({
@@ -104,14 +190,73 @@ const addMessage = (text: string) => {
             content: 'Это отличный вопрос! Давай я немного подумаю...'
         })
         scrollToBottom()
+        saveMessagesToLocalStorage()
     }, 1500)
 }
+
+watch(currentTask, (newTask) => {
+    if (newTask) {
+        console.log('Новая задача получена:', newTask.taskId)
+        
+        // Добавляем задачу в чат как AI сообщение
+        const taskMessage: ChatMessage = {
+            role: 'ai',
+            content: formatTaskMessage(newTask)
+        }
+        
+        messages.value.push(taskMessage)
+        scrollToBottom()
+        saveMessagesToLocalStorage()
+    }
+}, { immediate: true })
+
+// Инициализация при монтировании
+onMounted(() => {
+    const messagesRestored = restoreMessagesFromLocalStorage()
+    
+    if (!messagesRestored) {
+        // Если сообщений не было сохранено, инициализируем начальное состояние
+        if (currentTask.value) {
+            // Если есть текущая задача, но нет сохраненных сообщений
+            messages.value.push({
+                role: 'ai',
+                content: formatTaskMessage(currentTask.value)
+            })
+            saveMessagesToLocalStorage()
+        } 
+//         else if (assessmentStore.hasActiveSession) {
+//             // Если сессия активна, но задачи нет - показываем приветствие
+//             messages.value.push({
+//                 role: 'ai',
+//                 content: `# 👋 Привет!
+
+// Я готов провести техническое интервью.
+
+// **Язык программирования:** ${assessmentStore.programmingLanguage}  
+// **Тема:** ${assessmentStore.selectedSubject}  
+// **Текущая сложность:** ${assessmentStore.currentDifficulty.toFixed(1)}/5.0
+
+// Жду загрузки первой задачи... ⏳`
+//             })
+//             saveMessagesToLocalStorage()
+//         }
+    }
+    
+    scrollToBottom()
+})
 
 const scrollToBottom = async () => {
     await nextTick()
     const container = document.querySelector('.chat__content')
     if (container) container.scrollTop = container.scrollHeight
 }
+
+defineExpose({
+    clearChatLocalStorage,
+    saveMessagesToLocalStorage,
+    restoreMessagesFromLocalStorage
+})
+
 </script>
 
 <style lang="scss" scoped>

@@ -7,6 +7,17 @@ import type {
   GenerateTaskScenarioRequest,
 } from '@/types/types-api';
 
+  // ============ GLOBAL STATE (SINGLETON) ============
+
+  // Текущая активная задача
+  const currentTask: Ref<TaskResponse | null> = ref(null);
+  // История всех сгенерированных задач в текущей сессии
+  const taskHistory: Ref<TaskResponse[]> = ref([]);
+  // Флаг процесса генерации задачи
+  const isGenerating = ref(false);
+  // Объект ошибки
+  const error: Ref<Error | null> = ref(null);
+
 /**
  * Composable для генерации и управления задачами
  * 
@@ -27,21 +38,6 @@ import type {
  * ```
  */
 export const useTasks = () => {
-  // ============ STATE ============
-
-  // Текущая активная задача
-  const currentTask: Ref<TaskResponse | null> = ref(null);
-
-
-  // История всех сгенерированных задач в текущей сессии
-  const taskHistory: Ref<TaskResponse[]> = ref([]);
-
-  // Флаг процесса генерации задачи
-  const isGenerating = ref(false);
-
-  // Объект ошибки
-  const error: Ref<Error | null> = ref(null);
-
   // ============ ACTIONS ============
 
   /**
