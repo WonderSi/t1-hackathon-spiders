@@ -81,14 +81,6 @@ const onLanguageChange = () => {
     flex-direction: column;
 }
 
-.code-window-content {
-    flex: 1 1 auto;
-    padding: 16px;
-    overflow-y: auto;
-    min-height: 0;
-
-}
-
 .code-window-header {
     padding: 16px;
     border-bottom: 2px solid $clr-light-accent;
@@ -104,26 +96,67 @@ const onLanguageChange = () => {
     label {
         display: flex;
         align-items: center;
-        gap: 2px;
+        gap: 16px;
         font-size: 14px;
+        font-family: $font-sans;
     }
 
     select {
-        padding: 4px 8px;
+        padding: 4px 4px;
         border-radius: 4px;
         border: none;
         background: $clr-light-card;
         cursor: pointer;
+        font-family: $font-sans;
+        box-shadow: $shadow;
     }
 }
 
 .code-window-content {
     flex: 1 1 auto;
-    min-height: 0; // важно для корректного overflow
+    padding: 16px;
     overflow: hidden; // Monaco сам рендерит скролл
+    min-height: 0;
 }
 
-.submit-btn {
+.code-window-footer {
+    padding: $space-16px;
+    border-top: 2px solid $clr-light-accent;
+    
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: $clr-light-card;
 
+    .status-info {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        font-family: $font-sans;
+        font-size: $font-size-base
+    }
+
+    .code-window-submit-btn {
+        padding: 8px 16px;
+        background-color: $clr-light-main;
+        color: $clr-light-card;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 400;
+        font-family: $font-sans;
+        transition: opacity 0.2s;
+
+        &:hover {
+        opacity: 0.9;
+        }
+
+        &:disabled {
+        background-color: $clr-light-accent;
+        cursor: not-allowed;
+        }
+    }
 }
+.status-success { color: $clr-light-ui-code-passed-text; }
+.status-error { color: $clr-light-ui-code-error-text; }
 </style>
