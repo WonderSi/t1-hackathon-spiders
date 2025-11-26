@@ -1,0 +1,92 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# ASP.NET Core
+appsettings.*.json
+!appsettings.json
+
+# User-specific files
+*.sln.ide/
+
+# Visual Studio Code
+.vscode/
+
+# JetBrains Rider
+.idea/
+*.DotSettings.user
+
+# Docker
+docker-compose*.yml
+!docker-compose.yml
+.dockerignore
+
+# Environment variables
+.env
+
+# Coverage results
+coverage/
+*.coverage
+*.coveragexml
+
+# Unit test reports
+test-results/
+
+# NuGet packages
+*.nupkg
+*.nuspec
+nuget/
+
+# Publish output
+[pP]ublish/
+*.pubxml
+*.pubxml.user
+
+# Runtime identifiers
+runtime/
+
+# Temporary files
+*.tmp
+*.log
+*.swp
+*.swo
+
+# Build artifacts
+*.exe
+*.dll
+*.pdb
+*.config
+*.manifest
+
+# Local user settings
+*.userprefs
+
+# Package Manager Console
+packages.config
+
+# Entity Framework Core migrations
+Migrations/
+
+# Стандартные файлы Windows
+Thumbs.db
+Desktop.ini
+
+# Файлы macOS
+.DS_Store
+
+# Файлы Linux
+*~
+
+# Логи и кэш
+logs/
+cache/
+temp/
+
+# Исключения: сохраняем важные файлы
+!compose.yaml
+!InterviewFuture.sln
+!InterviewFuture.DotSettings.user
