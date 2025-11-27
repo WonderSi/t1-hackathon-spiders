@@ -133,3 +133,20 @@ export interface DetectPlagiarismRequest {
 export interface PlagiarismResponse {
   isPlagiarized: boolean;
 }
+
+// ============ SUBMIT ============
+
+export interface SubmitSolutionRequest {
+  sessionId: string;
+  taskId: string;
+  taskDescription: string;
+  solution: string;
+  language: string;
+  taskDifficulty: number;  
+}
+
+export interface SubmitSolutionResponse {
+  score: number;
+  newDifficulty: number;
+  grade: CandidateGrade;
+}
