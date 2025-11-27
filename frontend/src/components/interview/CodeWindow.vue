@@ -158,14 +158,12 @@ const editorOptions = {
 
 // ============ STATE ============
 
-const { metrics, violations } = useAntiCheat()
+const { metrics, violations, registerPaste, analyzeInputPattern } = useAntiCheat()
 const { startTimer, stopTimer, resetTimer, startTime, isTracking, formattedTime } = useSolutionTimer()
 
 const editorInstance = ref<any>(null)
-let lastChangeTime = Date.now()
-const typingSpeed = ref<number[]>([])
 
-const selectedLanguage = ref<Language>('python');
+const selectedLanguage = ref<Language>('javascript');
 const code = ref<string>(templates[selectedLanguage.value]);
 const selectedTheme = ref<string>('vs'); // по факту const, можем добавить больше тем в будущем если также внедрим их для всей страницы
 
@@ -210,39 +208,20 @@ const onEditorMount = (editor: any) => {
 
     // Отслеживание вставки из буфера обмена
     editor.onDidPaste((e: any) => {
-        metrics.value.pasteCount++
-        metrics.value.codeChangeTimestamps.push(Date.now())
-
-        if (metrics.value.pasteCount > 3) {
-            violations.value.push(`Подозрительное количество вставок: ${metrics.value.pasteCount}`)
-        }
+        registerPaste(0)
     })
 
     // Отслеживание изменений кода
     editor.onDidChangeModelContent((e: any) => {
-        const now = Date.now()
-        const timeDiff = now - lastChangeTime
-
-        typingSpeed.value.push(timeDiff)
-        metrics.value.codeChangeTimestamps.push(now)
-
+        const changes = e.changes[0]
+        const textLength = changes?.text.length || 0
+        
+        // Запускаем таймер при первом вводе
         const lineCount = editor.getModel()?.getLineCount() || 0
         if (lineCount >= 10 && !startTime.value) {
             startTimer()
         }
-
-        if (timeDiff < 10 && e.changes[0]?.text.length > 20) {
-            violations.value.push('Обнаружена аномально быстрая вставка кода')
-        }
-
-        lastChangeTime = now
-    })
-
-    editor.onKeyDown((e: any) => {
-        const isCtrlV = (e.ctrlKey || e.metaKey) && e.code === 'KeyV'
-        if (isCtrlV) {
-            console.warn('Попытка вставки из буфера обмена')
-        }
+        analyzeInputPattern(textLength)   
     })
 }
 
