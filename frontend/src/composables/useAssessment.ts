@@ -5,6 +5,8 @@ import type {
   AssessmentResponse,
   DetectPlagiarismRequest,
   PlagiarismResponse,
+  SubmitSolutionRequest,
+  SubmitSolutionResponse, 
 } from '@/types/types-api';
 
 /**
@@ -105,6 +107,26 @@ export const useAssessment = () => {
     } finally {
       isAssessing.value = false;
     }
+  };
+
+  const submitSolution = async (
+    sessionId: string,
+    taskId: string,
+    taskDescription: string,
+    solution: string,
+    language: string,
+    taskDifficulty: number
+  ): Promise<SubmitSolutionResponse> => {
+    const request: SubmitSolutionRequest = {
+      sessionId,
+      taskId,
+      taskDescription,
+      solution,
+      language,
+      taskDifficulty,
+    };
+
+    return assessmentApi.submitSolution(request);
   };
 
   /**
@@ -240,6 +262,7 @@ export const useAssessment = () => {
 
     // Actions
     assessSolution,
+    submitSolution,
     checkPlagiarism,
     assessAndCheckPlagiarism,
     resetAssessment,

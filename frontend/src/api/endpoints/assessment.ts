@@ -8,6 +8,8 @@ import type {
   GradeResponse,
   DetectPlagiarismRequest,
   PlagiarismResponse,
+  SubmitSolutionRequest,
+  SubmitSolutionResponse,
 } from '@/types/types-api';
 
 export const assessmentApi = {
@@ -15,6 +17,17 @@ export const assessmentApi = {
   async assessSolution(request: AssessSolutionRequest): Promise<AssessmentResponse> {
     const { data } = await apiClient.post<AssessmentResponse>(
       '/api/llm/assess-solution',
+      request
+    );
+    return data;
+  },
+
+  // Sending the solution in the code format
+  async submitSolution(
+    request: SubmitSolutionRequest
+  ): Promise<SubmitSolutionResponse> {
+    const { data } = await apiClient.post<SubmitSolutionResponse>(
+      '/api/llm/submit-solution',
       request
     );
     return data;

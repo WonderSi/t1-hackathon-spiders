@@ -58,9 +58,9 @@
             <button 
                 class="code-window-submit-btn" 
                 @click="handleSubmit" 
-                :disabled="isSubmitting || isSubmittingExternal"
+                :disabled="isSubmitting"
             >
-                {{ isSubmitting || isSubmittingExternal ? 'Отправка...' : 'Отправить' }}
+                {{ isSubmitting ? 'Отправка...' : 'Отправить' }}
             </button>
         </div>
     </div>
@@ -75,7 +75,7 @@ import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker'
 import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker'
 import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
 
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { CodeEditor, type EditorOptions } from 'monaco-editor-vue3'
 import { defineStore } from 'pinia';
 
@@ -84,6 +84,15 @@ import { useSolutionTimer } from '@/composables/useSolutionTimer'
 import AntiCheatWarning from './AntiCheatWarning.vue'
 import { analyzeCodeOriginality } from '@/utils/codeAnalysis'
 import { useAssessmentStore } from '@/stores/assessment'
+import { useTasks } from '@/composables/useTasks'
+import { assessmentApi } from '@/api/endpoints'
+import type { 
+  SubmitSolutionRequest, 
+  SubmitSolutionResponse,
+  Performance,
+  SkillLevel,
+  Subject 
+} from '@/types/types-api'
 
 self.MonacoEnvironment = {
   getWorker(_, label) {
@@ -106,12 +115,10 @@ self.MonacoEnvironment = {
 // ============ PROPS & EMITS ============
 
 interface Props {
-  isSubmittingExternal?: boolean;
+
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  isSubmittingExternal: false
-});
+const props = defineProps<Props>()
 
 interface SubmitPayload {
   code: string;
@@ -125,6 +132,7 @@ interface SubmitPayload {
 }
 
 const emit = defineEmits<{
+
     submit: [payload: SubmitPayload];
     statusChange: [status: StatusMessage];
 }>();
@@ -177,6 +185,7 @@ const editorOptions = {
 }
 
 const assessmentStore = useAssessmentStore();
+const { currentTask, generateLLMTask } = useTasks()
 
 // ============ STATE ============
 
@@ -255,60 +264,124 @@ const onCodeChange = (value?: string): void => {
 }
 
 const handleSubmit = async (): Promise<void> => {
-    if (isSubmitting.value || props.isSubmittingExternal) return;
+  if (isSubmitting.value || !currentTask.value || !assessmentStore.hasActiveSession) {
+    console.warn('❌ Нет задачи/сессии или submit в процессе')
+    return
+  }
 
-    submitionAttempts.value++;
-    isSubmitting.value = true;
-    passedStatus.value = STATUS_MESSAGES.CHECKING;
-    emit('statusChange', STATUS_MESSAGES.CHECKING);
+  submitionAttempts.value++
+  isSubmitting.value = true
+  passedStatus.value = STATUS_MESSAGES.CHECKING
+  emit('statusChange', STATUS_MESSAGES.CHECKING)
 
-    // В коммите, потому что не используется
-    // const antiCheatData = {
-    //     metrics: metrics.value,
-    //     violations: violations.value,
-    //     codeAnalysis: analyzeCodeOriginality(code.value),
-    //     solutionTime: formattedTime.value
-    // }
-
-    const payload: SubmitPayload = {
-    code: code.value,
-    language: selectedLanguage.value,
-    solutionTime: formattedTime.value,
-    antiCheatMetrics: {
-      metrics: metrics.value,
-      violations: violations.value,
-      codeAnalysis: analyzeCodeOriginality(code.value)
+  try {
+    const request: SubmitSolutionRequest = {
+      sessionId: assessmentStore.sessionId,
+      taskId: currentTask.value.taskId,
+      taskDescription: currentTask.value.description,
+      solution: code.value,
+      language: assessmentStore.programmingLanguage, 
+      taskDifficulty: currentTask.value.estimatedDifficulty
     }
-  };
 
-    try {
+    console.log('Submit solution:', request)
 
-        emit('submit', payload);
+    const response: SubmitSolutionResponse = await assessmentApi.submitSolution(request)
+    const { score, newDifficulty, grade } = response
 
-        // await new Promise(resolve => setTimeout(resolve, 1500)); // Имитация запроса к API (здесь будет fetch/axios)
+    console.log(`Response: score=${score}, newDiff=${newDifficulty}, grade=${grade}`)
 
-        // // ВАЖНО: isSuccess придет с бэкенда НУЖНО ОБНОВИТЬ
-        // const isSuccess = Math.random() > 0.5; // заглушка для проверки статусов:
+    const performance: Performance = score >= 4.0 ? 'Correct' : score >= 2.0 ? 'Partially' : 'Incorrect'
 
-        // if (isSuccess) {
-        //     passedStatus.value = STATUS_MESSAGES.SUCCESS;
-            
-        //     finalSolutionTime.value = formattedTime.value;
-        //     stopTimer();
-    
-        //     resetTimer();
-        // } else {
-        //     passedStatus.value = STATUS_MESSAGES.FAILED;
-        // }
+    assessmentStore.saveTaskAttempt(
+      currentTask.value.taskId,
+      currentTask.value.description,
+      code.value,
+      score,
+      performance
+    )
 
+    assessmentStore.currentDifficulty = newDifficulty
 
-        // passedStatus.value = isSuccess ? STATUS_MESSAGES.SUCCESS : STATUS_MESSAGES.FAILED;
-    } catch (e: unknown) {
-        console.error('Ошибка отправки:', e);
-        passedStatus.value = STATUS_MESSAGES.ERROR;
-        emit('statusChange', STATUS_MESSAGES.ERROR);
-        isSubmitting.value = false;
+    passedStatus.value = performance === 'Correct' ? STATUS_MESSAGES.SUCCESS : STATUS_MESSAGES.FAILED
+    emit('statusChange', passedStatus.value)
+
+    if (passedStatus.value === STATUS_MESSAGES.SUCCESS) {
+      finalSolutionTime.value = formattedTime.value
+      stopTimer()  // Локальный solution timer
+      resetTimer()
     }
+
+    const feedbackMD = `# Результат проверки
+
+**Оценка:** ${score.toFixed(1)}/5.0 ${getEmoji(score)}  
+**Новая сложность:** ${newDifficulty.toFixed(1)}/5  
+**Текущий грейд:** ${grade}
+
+${performance === 'Correct' ? 'Отлично! Генерирую следующую задачу...' : 'Попробуй ещё раз или жди новую задачу.'}
+
+---
+
+${getFeedbackTips(performance, score)}`
+
+    window.dispatchEvent(new CustomEvent('solution-feedback', {
+      detail: { feedback: feedbackMD, performance, score }
+    }))
+
+    if (assessmentStore.totalTasks < 5) {
+      console.log('Генерация новой задачи...')
+      await generateLLMTask({
+        skillLevel: assessmentStore.skillLevel as SkillLevel,
+        programmingLanguage: assessmentStore.programmingLanguage,
+        subject: assessmentStore.selectedSubject as Subject,
+        currentDifficulty: newDifficulty,
+        previousPerformance: performance
+      })
+      // Chat watch(currentTask) → добавит новую задачу!
+
+      // Reset editor для новой задачи (локально)
+      await nextTick()
+      resetForNewTask()
+    } else {
+      // конец
+      assessmentStore.finalGrade = grade
+      assessmentStore.endSession()
+      console.log(`Интервью завершено! Final grade: ${grade}`)
+
+      const endMD = `# Интервью завершено!
+
+**Итоговый грейд:** ${grade}  
+**Задач решено:** ${assessmentStore.totalTasks}  
+
+Спасибо за участие!`
+      window.dispatchEvent(new CustomEvent('interview-complete', { detail: { feedback: endMD } }))
+    }
+
+  } catch (error) {
+    console.error('Submit error:', error)
+    passedStatus.value = STATUS_MESSAGES.ERROR
+    emit('statusChange', STATUS_MESSAGES.ERROR)
+
+    // Feedback об ошибке в chat
+    window.dispatchEvent(new CustomEvent('solution-feedback', {
+      detail: { feedback: '# Ошибка сети\nПопробуйте ещё раз позже.' }
+    }))
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+// feedback
+function getEmoji(score: number): string {
+  if (score >= 4.0) return '🎉'
+  if (score >= 2.5) return '👍'
+  return '😕'
+}
+
+function getFeedbackTips(performance: Performance, score: number): string {
+  if (performance === 'Correct') return 'Отличная работа!'
+  if (performance === 'Partially') return 'Почти верно, подумайте над оптимизацией.'
+  return 'Проверьте логику алгоритма.'
 }
 
 const updateStatus = (status: StatusMessage): void => {
