@@ -320,6 +320,24 @@ watch(passedStatus, (newStatus) => {
     emit('statusChange', newStatus);
 });
 
+watch(
+  () => assessmentStore.programmingLanguage,
+  (newRawLanguage) => {
+    // Нормализуем название языка (например 'Python' -> 'python')
+    const newLang = getNormalizedLanguage(newRawLanguage);
+    
+    // Обновляем локальный стейт
+    selectedLanguage.value = newLang;
+    
+    // Сбрасываем код на шаблон нового языка
+    code.value = templates[newLang];
+    
+    // Сбрасываем таймер и статусы, так как это новая задача
+    passedStatus.value = STATUS_MESSAGES.IDLE;
+    resetTimer();
+  }
+);
+
 defineExpose({
     updateStatus,
     resetForNewTask
