@@ -16,12 +16,35 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import AttachedFile from '../AttachedFile.vue'
+import { useAssessmentStore } from '@/stores/assessment'
 
-const jobTitle = 'Frontend-разработчик'
-const jobGrade = 'Junior'
+const assessmentStore = useAssessmentStore()
+
 const companyName = 'Т1'
+
+const jobTitle = computed(() => {
+  if (!assessmentStore.selectedSubject || !assessmentStore.selectedSubject.trim()) {
+    return 'IT-специалист'
+  }
+
+  const subjectMap: Record<string, string> = {
+    'Algorithms': 'Алгоритмы',
+    'OOP': 'Объектно-ориентированное программирование',
+    'Data Structures': 'Структура данных',
+    'Databases': 'База данных',
+    'System Design': 'Системный архитектор',
+    'Testing': 'Тестировщик',
+  }
+
+  const prefix = subjectMap[assessmentStore.selectedSubject] || 'Software'
+  return prefix
+})
+
+const jobGrade = computed<'Junior' | 'Middle' | 'Senior'>(() => {
+  return assessmentStore.skillLevel ?? 'Junior'
+})
 
 const timer = ref('01:00:00')
 let remainingSeconds = 3600 

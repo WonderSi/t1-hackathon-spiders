@@ -179,6 +179,7 @@ const handleSubmit = async (): Promise<void> => {
     assessmentStore.startSession(
       formData.value.programmingLanguage,
       formData.value.subject as Subject,
+      formData.value.skillLevel as SkillLevel,
       'llm' // Режим адаптивной генерации
     );
 
