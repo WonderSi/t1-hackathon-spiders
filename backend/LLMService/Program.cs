@@ -7,7 +7,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:3000", "https://localhost:3000") // адрес фронтенда
+        policy.WithOrigins("http://localhost:5173", "https://localhost:5173") // адрес фронтенда
             .AllowAnyHeader()
             .AllowAnyMethod();
         // .AllowCredentials(); // Раскомментируйте, если есть куки/авторизацию
