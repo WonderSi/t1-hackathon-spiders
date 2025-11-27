@@ -2,7 +2,7 @@ import axios, { type AxiosInstance } from 'axios';
 import { requestInterceptor } from './interceptors/request';
 import { responseInterceptor, errorInterceptor } from './interceptors/response';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://localhost:7213';
 
 export const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,

@@ -3,16 +3,7 @@
         <div class="code-window-header">
             <div class="header-controls">
                 <label>
-                    Язык:
-                    <select v-model="selectedLanguage" @change="onLanguageChange">
-                        <option value="javascript">JavaScript</option>
-                        <option value="typescript">TypeScript</option>
-                        <option value="kotlin">Kotlin</option>
-                        <option value="java">Java</option>
-                        <option value="python">Python</option>
-                        <option value="cpp">C++</option>
-                        <option value="go">Go</option>
-                    </select>
+                    Язык: <strong>{{ assessmentStore.programmingLanguage }}</strong>
                 </label>
                 <div class="timer">
                     <div v-if="startTime" class="timer-display" :class="{ 'timer-active': isTracking }">
@@ -78,6 +69,7 @@ import { useAntiCheat } from '@/composables/useAntiCheat'
 import { useSolutionTimer } from '@/composables/useSolutionTimer'
 import AntiCheatWarning from './AntiCheatWarning.vue'
 import { analyzeCodeOriginality } from '@/utils/codeAnalysis'
+import { useAssessmentStore } from '@/stores/assessment'
 
 self.MonacoEnvironment = {
   getWorker(_, label) {
@@ -125,6 +117,20 @@ const emit = defineEmits<{
 
 // ============ TYPES & CONSTANTS ============
 
+const languageMap: Record<string, Language> = {
+    'JavaScript': 'javascript',
+    'TypeScript': 'typescript',
+    'Kotlin': 'kotlin',
+    'Java': 'java',
+    'Python': 'python',
+    'C++': 'cpp',
+    'Go': 'go'
+};
+
+const getNormalizedLanguage = (input: string): Language => {
+    return languageMap[input] || 'javascript'; 
+}
+
 type Language = 'javascript' | 'typescript' | 'kotlin' | 'java' | 'kotlin' | 'python' | 'cpp' | 'go';
 
 const STATUS_MESSAGES = {
@@ -156,16 +162,16 @@ const editorOptions = {
     renderValidationDecorations: 'on',
 }
 
+const assessmentStore = useAssessmentStore();
+
 // ============ STATE ============
 
-const { metrics, violations } = useAntiCheat()
+const { metrics, violations, registerPaste, analyzeInputPattern } = useAntiCheat()
 const { startTimer, stopTimer, resetTimer, startTime, isTracking, formattedTime } = useSolutionTimer()
 
-const editorInstance = ref<any>(null)
-let lastChangeTime = Date.now()
-const typingSpeed = ref<number[]>([])
+const editorInstance = ref<any>(null);
 
-const selectedLanguage = ref<Language>('python');
+const selectedLanguage = ref<Language>(getNormalizedLanguage(assessmentStore.programmingLanguage));
 const code = ref<string>(templates[selectedLanguage.value]);
 const selectedTheme = ref<string>('vs'); // по факту const, можем добавить больше тем в будущем если также внедрим их для всей страницы
 
@@ -210,51 +216,21 @@ const onEditorMount = (editor: any) => {
 
     // Отслеживание вставки из буфера обмена
     editor.onDidPaste((e: any) => {
-        metrics.value.pasteCount++
-        metrics.value.codeChangeTimestamps.push(Date.now())
-
-        if (metrics.value.pasteCount > 3) {
-            violations.value.push(`Подозрительное количество вставок: ${metrics.value.pasteCount}`)
-        }
+        registerPaste(0)
     })
 
     // Отслеживание изменений кода
     editor.onDidChangeModelContent((e: any) => {
-        const now = Date.now()
-        const timeDiff = now - lastChangeTime
-
-        typingSpeed.value.push(timeDiff)
-        metrics.value.codeChangeTimestamps.push(now)
-
+        const changes = e.changes[0]
+        const textLength = changes?.text.length || 0
+        
+        // Запускаем таймер при первом вводе
         const lineCount = editor.getModel()?.getLineCount() || 0
         if (lineCount >= 10 && !startTime.value) {
             startTimer()
         }
-
-        if (timeDiff < 10 && e.changes[0]?.text.length > 20) {
-            violations.value.push('Обнаружена аномально быстрая вставка кода')
-        }
-
-        lastChangeTime = now
+        analyzeInputPattern(textLength)   
     })
-
-    editor.onKeyDown((e: any) => {
-        const isCtrlV = (e.ctrlKey || e.metaKey) && e.code === 'KeyV'
-        if (isCtrlV) {
-            console.warn('Попытка вставки из буфера обмена')
-        }
-    })
-}
-
-const onLanguageChange = (): void => {
-    passedStatus.value = STATUS_MESSAGES.IDLE;
-
-    const currentCodeIsTemplate = Object.values(templates).includes(code.value);
-    const codeIsEmpty = !code.value || !code.value.trim();
-
-    if (codeIsEmpty || currentCodeIsTemplate) {
-        code.value = templates[selectedLanguage.value || ''];
-    }
 }
 
 const onCodeChange = (value?: string): void => {
