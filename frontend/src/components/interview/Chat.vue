@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
   
-import { ref, nextTick, watch, onMounted } from 'vue'
+import { ref, nextTick, watch, onMounted, onUnmounted } from 'vue'
 import MessagePanel from './MessagePanel.vue'
 import MarkdownIt from 'markdown-it'
 import hljs from 'highlight.js'
@@ -226,8 +226,23 @@ onMounted(() => {
 //             saveMessagesToLocalStorage()
 //         }
     }
-    
     scrollToBottom()
+
+    const handleFeedback = (e: CustomEvent) => {
+    const msg: ChatMessage = { role: 'ai', content: e.detail.feedback }
+    messages.value.push(msg)
+    scrollToBottom()
+    saveMessagesToLocalStorage()
+  }
+
+  window.addEventListener('solution-feedback', handleFeedback as EventListener)
+  window.addEventListener('interview-complete', handleFeedback as EventListener)
+
+  // Cleanup
+  onUnmounted(() => {
+    window.removeEventListener('solution-feedback', handleFeedback as EventListener)
+    window.removeEventListener('interview-complete', handleFeedback as EventListener)
+  })
 })
 
 const scrollToBottom = async () => {
