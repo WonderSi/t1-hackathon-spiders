@@ -73,6 +73,8 @@ export const useAssessmentStore = defineStore('assessment', () => {
 
   const skillLevel = ref<SkillLevel | null>(null);
 
+  const timerStartTimestamp = ref<number | null>(null)
+
   // ============ GETTERS ============
 
   // Общее количество решённых задач
@@ -160,10 +162,11 @@ export const useAssessmentStore = defineStore('assessment', () => {
     taskAttempts.value = [];
     finalGrade.value = null;
 
-    console.log(`   Сессия начата: ${sessionId.value}`);
-    console.log(`   Язык: ${language}, Тема: ${subject}, Режим: ${mode}`);
+    console.log(`Сессия начата: ${sessionId.value}`);
+    console.log(`Язык: ${language}, Тема: ${subject}, Режим: ${mode}`);
 
     // Сохраняем в localStorage для восстановления после перезагрузки
+    startTimer()
     saveSessionToLocalStorage();
   };
 
@@ -205,7 +208,7 @@ export const useAssessmentStore = defineStore('assessment', () => {
     };
 
     taskAttempts.value.push(attempt);
-    console.log(`  Сохранено решение: ${performance} (${score}/5.0)`);
+    console.log(`Сохранено решение: ${performance} (${score}/5.0)`);
 
     // Обновляем localStorage
     saveSessionToLocalStorage();
@@ -239,7 +242,7 @@ export const useAssessmentStore = defineStore('assessment', () => {
     performance: Performance
   ): Promise<number> => {
     if (!sessionId.value) {
-      console.error('  Нет активной сессии');
+      console.error('Нет активной сессии');
       return currentDifficulty.value;
     }
 
@@ -264,7 +267,7 @@ export const useAssessmentStore = defineStore('assessment', () => {
       saveSessionToLocalStorage();
       return response.newDifficulty;
     } catch (err) {
-      console.error('  Ошибка обновления сложности:', err);
+      console.error('Ошибка обновления сложности:', err);
       return currentDifficulty.value;
     }
   };
@@ -285,7 +288,7 @@ export const useAssessmentStore = defineStore('assessment', () => {
  */
 const determineFinalGrade = async (): Promise<CandidateGrade | null> => {
   if (!sessionId.value) {
-    console.error('  Нет активной сессии');
+    console.error('Нет активной сессии');
     return null;
   }
 
@@ -293,12 +296,12 @@ const determineFinalGrade = async (): Promise<CandidateGrade | null> => {
     const response = await assessmentApi.determineGrade(sessionId.value);
     finalGrade.value = response.grade;
 
-    console.log(`  Итоговый грейд: ${response.grade}`);
+    console.log(`Итоговый грейд: ${response.grade}`);
     saveSessionToLocalStorage();
 
     return response.grade;
   } catch (err) {
-    console.error('  Ошибка определения грейда:', err);
+    console.error('Ошибка определения грейда:', err);
     return null;
   }
 };
@@ -307,11 +310,12 @@ const determineFinalGrade = async (): Promise<CandidateGrade | null> => {
   // Завершить сессию и сохранить в историю
   const endSession = (): void => {
     if (!sessionId.value) {
-      console.warn('   Нет активной сессии для завершения');
+      console.warn('Нет активной сессии для завершения');
+      stopTimer()
       return;
     }
 
-    console.log(`  Сессия завершена: ${sessionId.value}`);
+    console.log(`Сессия завершена: ${sessionId.value}`);
 
     // Сохраняем в localStorage как завершённую
     const sessionData = {
@@ -365,6 +369,7 @@ const determineFinalGrade = async (): Promise<CandidateGrade | null> => {
       interviewMode: interviewMode.value,
       selectedScenarioId: selectedScenarioId.value,
       skillLevel: skillLevel.value,
+      timerStartTimestamp: timerStartTimestamp.value,
     };
 
     localStorage.setItem('current_session', JSON.stringify(sessionData));
@@ -389,14 +394,31 @@ const determineFinalGrade = async (): Promise<CandidateGrade | null> => {
       interviewMode.value = data.interviewMode;
       selectedScenarioId.value = data.selectedScenarioId;
       skillLevel.value = data.skillLevel;
+      timerStartTimestamp.value = data.timerStartTimestamp || null,
 
-      console.log('  Сессия восстановлена:', sessionId.value);
+      console.log('Сессия восстановлена:', sessionId.value);
       return true;
     } catch (err) {
-      console.error('  Ошибка восстановления сессии:', err);
+      console.error('Ошибка восстановления сессии:', err);
       return false;
     }
   };
+
+  const startTimer = (): void => {
+    if (!timerStartTimestamp.value && hasActiveSession.value) {
+      timerStartTimestamp.value = Date.now()  // Timestamp в ms
+      console.log('Таймер запущен:', new Date(timerStartTimestamp.value).toLocaleTimeString())
+      saveSessionToLocalStorage()
+    }
+  }
+
+  const stopTimer = (): void => {
+    if (timerStartTimestamp.value) {
+      console.log('Таймер остановлен')
+      timerStartTimestamp.value = null
+      saveSessionToLocalStorage()
+    }
+  }
 
   // ============ RETURN ============
 
@@ -411,6 +433,7 @@ const determineFinalGrade = async (): Promise<CandidateGrade | null> => {
     interviewMode,
     selectedScenarioId,
     skillLevel,
+    timerStartTimestamp,
 
     // Getters
     totalTasks,
@@ -431,5 +454,7 @@ const determineFinalGrade = async (): Promise<CandidateGrade | null> => {
     endSession,
     resetStore,
     restoreSession,
+    startTimer,
+    stopTimer
   };
 });
