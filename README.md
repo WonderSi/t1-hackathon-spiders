@@ -36,7 +36,7 @@ cd t1-hackathon-spiders
 ### 3. Запуск FrontEnd
 
 ```
-dc frontend
+cd frontend
 ```
 
 #### 3.1. Установка зависимостей (yarn)
