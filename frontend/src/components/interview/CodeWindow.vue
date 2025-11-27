@@ -51,8 +51,13 @@
                 </span>
             </div>
 
-            <button class="code-window-submit-btn" @click="handleSubmit" :disabled="isSubmitting">{{ isSubmitting ?
-                'Отправка...' : 'Отправить' }}</button>
+            <button 
+                class="code-window-submit-btn" 
+                @click="handleSubmit" 
+                :disabled="isSubmitting || isSubmittingExternal"
+            >
+                {{ isSubmitting || isSubmittingExternal ? 'Отправка...' : 'Отправить' }}
+            </button>
         </div>
     </div>
 </template>
@@ -66,7 +71,7 @@ import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker'
 import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker'
 import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
 
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { CodeEditor, type EditorOptions } from 'monaco-editor-vue3'
 
 import { useAntiCheat } from '@/composables/useAntiCheat'
@@ -92,15 +97,85 @@ self.MonacoEnvironment = {
   }
 }
 
+// ============ PROPS & EMITS ============
+
+interface Props {
+  isSubmittingExternal?: boolean;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  isSubmittingExternal: false
+});
+
+interface SubmitPayload {
+  code: string;
+  language: string;
+  solutionTime: string;
+  antiCheatMetrics: {
+    metrics: any;
+    violations: string[];
+    codeAnalysis: any;
+  };
+}
+
+const emit = defineEmits<{
+  submit: [payload: SubmitPayload];
+  statusChange: [status: StatusMessage];
+}>();
+
+// ============ TYPES & CONSTANTS ============
+
+type Language = 'javascript' | 'typescript' | 'kotlin' | 'java' | 'kotlin' | 'python' | 'cpp' | 'go';
+
+const STATUS_MESSAGES = {
+    IDLE: '',
+    CHECKING: 'Проверка...',
+    SUCCESS: 'Решено!',
+    FAILED: 'Неправильно :(',
+    ERROR: 'Ошибка сети'
+} as const;
+
+type StatusMessage = typeof STATUS_MESSAGES[keyof typeof STATUS_MESSAGES];
+
+const templates: Record<Language, string> = {
+    javascript: `console.log('Hello JS');`,
+    typescript: `const greeting: string = 'Hello TS';\nconsole.log(greeting);`,
+    python: `print("Hello Python")`,
+    java: `public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello Java");\n    }\n}`,
+    cpp: `#include <iostream>\n\nint main() {\n    std::cout << "Hello C++" << std::endl;\n    return 0;\n}`,
+    go: `package main\n\nimport "fmt"\n\nfunc main() {\n    fmt.Println("Hello Go")\n}`,
+    kotlin: `fun main() {\n    println("Hello Kotlin")\n}`
+};
+
+const editorOptions = {
+    automaticLayout: true,        // автоподстройка под размер контейнера
+    fontSize: 14,
+    minimap: { enabled: false },  // убрать миникарту справа
+    scrollBeyondLastLine: false,
+    wordWrap: 'on',               // перенос длинных строк
+    renderValidationDecorations: 'on',
+}
+
+// ============ STATE ============
+
 const { metrics, violations } = useAntiCheat()
-
 const { startTimer, stopTimer, resetTimer, startTime, isTracking, formattedTime } = useSolutionTimer()
-
-const finalSolutionTime = ref<string | null>(null);
 
 const editorInstance = ref<any>(null)
 let lastChangeTime = Date.now()
 const typingSpeed = ref<number[]>([])
+
+const selectedLanguage = ref<Language>('python');
+const code = ref<string>(templates[selectedLanguage.value]);
+const selectedTheme = ref<string>('vs'); // по факту const, можем добавить больше тем в будущем если также внедрим их для всей страницы
+
+const submitionAttempts = ref<number>(0);
+const isSubmitting = ref<boolean>(false);
+const passedStatus = ref<StatusMessage>(STATUS_MESSAGES.IDLE);
+
+const finalSolutionTime = ref<string | null>(null);
+
+// ============ COMPUTED ============
 
 const integrityScore = computed(() => {
     if (!code.value) return 100
@@ -118,6 +193,17 @@ const integrityScoreClass = computed(() => {
         return 'score-low';
     }
 });
+
+const passedStatusClass = computed((): string => {
+    switch (passedStatus.value) {
+        case STATUS_MESSAGES.SUCCESS: return 'status-success';
+        case STATUS_MESSAGES.FAILED: return 'status-failed';
+        case STATUS_MESSAGES.ERROR: return 'status-error'
+        default: return '';
+    }
+});
+
+// ============ METHODS ============
 
 const onEditorMount = (editor: any) => {
     editorInstance.value = editor
@@ -160,56 +246,6 @@ const onEditorMount = (editor: any) => {
     })
 }
 
-type Language = 'javascript' | 'typescript' | 'kotlin' | 'java' | 'kotlin' | 'python' | 'cpp' | 'go';
-
-const STATUS_MESSAGES = {
-    IDLE: '',
-    CHECKING: 'Проверка...',
-    SUCCESS: 'Решено!',
-    FAILED: 'Неправильно :(',
-    ERROR: 'Ошибка сети'
-} as const;
-
-type StatusMessage = typeof STATUS_MESSAGES[keyof typeof STATUS_MESSAGES];
-
-const code = ref<string>('print("Hello World")');
-
-const selectedLanguage = ref<Language>('python');
-const selectedTheme = ref<string>('vs'); // по факту const, можем добавить больше тем в будущем если также внедрим их для всей страницы
-
-const submitionAttempts = ref<number>(0);
-const isSubmitting = ref<boolean>(false);
-
-const passedStatus = ref<StatusMessage>(STATUS_MESSAGES.IDLE);
-
-const editorOptions = {
-    automaticLayout: true,        // автоподстройка под размер контейнера
-    fontSize: 14,
-    minimap: { enabled: false },  // убрать миникарту справа
-    scrollBeyondLastLine: false,
-    wordWrap: 'on',               // перенос длинных строк
-    renderValidationDecorations: 'on',
-}
-
-const templates: Record<Language, string> = {
-    javascript: `console.log('Hello JS');`,
-    typescript: `const greeting: string = 'Hello TS';\nconsole.log(greeting);`,
-    python: `print("Hello Python")`,
-    java: `public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello Java");\n    }\n}`,
-    cpp: `#include <iostream>\n\nint main() {\n    std::cout << "Hello C++" << std::endl;\n    return 0;\n}`,
-    go: `package main\n\nimport "fmt"\n\nfunc main() {\n    fmt.Println("Hello Go")\n}`,
-    kotlin: `fun main() {\n    println("Hello Kotlin")\n}`
-};
-
-const passedStatusClass = computed((): string => {
-    switch (passedStatus.value) {
-        case STATUS_MESSAGES.SUCCESS: return 'status-success';
-        case STATUS_MESSAGES.FAILED: return 'status-failed';
-        case STATUS_MESSAGES.ERROR: return 'status-error'
-        default: return '';
-    }
-});
-
 const onLanguageChange = (): void => {
     passedStatus.value = STATUS_MESSAGES.IDLE;
 
@@ -224,52 +260,94 @@ const onLanguageChange = (): void => {
 const onCodeChange = (value?: string): void => {
     if (passedStatus.value !== STATUS_MESSAGES.IDLE) {
         passedStatus.value = STATUS_MESSAGES.IDLE
+        emit('statusChange', STATUS_MESSAGES.IDLE)
     }
 }
 
 const handleSubmit = async (): Promise<void> => {
-    if (isSubmitting.value) return;
+    if (isSubmitting.value || props.isSubmittingExternal) return;
 
     submitionAttempts.value++;
     isSubmitting.value = true;
     passedStatus.value = STATUS_MESSAGES.CHECKING;
+    emit('statusChange', STATUS_MESSAGES.CHECKING);
 
-    finalSolutionTime.value = null;
+    // В коммите, потому что не используется
+    // const antiCheatData = {
+    //     metrics: metrics.value,
+    //     violations: violations.value,
+    //     codeAnalysis: analyzeCodeOriginality(code.value),
+    //     solutionTime: formattedTime.value
+    // }
 
-    const antiCheatData = {
-        metrics: metrics.value,
-        violations: violations.value,
-        codeAnalysis: analyzeCodeOriginality(code.value),
-        solutionTime: formattedTime.value
+    const payload: SubmitPayload = {
+    code: code.value,
+    language: selectedLanguage.value,
+    solutionTime: formattedTime.value,
+    antiCheatMetrics: {
+      metrics: metrics.value,
+      violations: violations.value,
+      codeAnalysis: analyzeCodeOriginality(code.value)
     }
+  };
 
     try {
-        await new Promise(resolve => setTimeout(resolve, 1500)); // Имитация запроса к API (здесь будет fetch/axios)
 
-        // ВАЖНО: isSuccess придет с бэкенда НУЖНО ОБНОВИТЬ
-        const isSuccess = Math.random() > 0.5; // заглушка для проверки статусов:
+        emit('submit', payload);
 
-        if (isSuccess) {
-            passedStatus.value = STATUS_MESSAGES.SUCCESS;
+        // await new Promise(resolve => setTimeout(resolve, 1500)); // Имитация запроса к API (здесь будет fetch/axios)
+
+        // // ВАЖНО: isSuccess придет с бэкенда НУЖНО ОБНОВИТЬ
+        // const isSuccess = Math.random() > 0.5; // заглушка для проверки статусов:
+
+        // if (isSuccess) {
+        //     passedStatus.value = STATUS_MESSAGES.SUCCESS;
             
-            finalSolutionTime.value = formattedTime.value;
-            stopTimer();
+        //     finalSolutionTime.value = formattedTime.value;
+        //     stopTimer();
     
-            resetTimer();
-        } else {
-            passedStatus.value = STATUS_MESSAGES.FAILED;
-        }
+        //     resetTimer();
+        // } else {
+        //     passedStatus.value = STATUS_MESSAGES.FAILED;
+        // }
 
 
-        passedStatus.value = isSuccess ? STATUS_MESSAGES.SUCCESS : STATUS_MESSAGES.FAILED;
+        // passedStatus.value = isSuccess ? STATUS_MESSAGES.SUCCESS : STATUS_MESSAGES.FAILED;
     } catch (e: unknown) {
-        console.error(e);
+        console.error('Ошибка отправки:', e);
         passedStatus.value = STATUS_MESSAGES.ERROR;
-    } finally {
+        emit('statusChange', STATUS_MESSAGES.ERROR);
         isSubmitting.value = false;
     }
-
 }
+
+const updateStatus = (status: StatusMessage): void => {
+    passedStatus.value = status;
+    isSubmitting.value = false;
+    if (status === STATUS_MESSAGES.SUCCESS) {
+        stopTimer();
+        resetTimer();
+    }
+};
+
+const resetForNewTask = (language?: Language): void => {
+    if (language) {
+        selectedLanguage.value = language;
+    }
+    
+    code.value = templates[selectedLanguage.value];
+    passedStatus.value = STATUS_MESSAGES.IDLE;
+    resetTimer();
+};
+
+watch(passedStatus, (newStatus) => {
+    emit('statusChange', newStatus);
+});
+
+defineExpose({
+    updateStatus,
+    resetForNewTask
+});
 </script>
 
 <style lang="scss">
