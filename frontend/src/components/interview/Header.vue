@@ -16,17 +16,53 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import AttachedFile from '../AttachedFile.vue'
+import { useAssessmentStore } from '@/stores/assessment'
+import { useTasks } from '@/composables/useTasks'
 
-const jobTitle = 'Frontend-разработчик'
-const jobGrade = 'Junior'
+const assessmentStore = useAssessmentStore()
+const { currentTask } = useTasks()
+
 const companyName = 'Т1'
 
-const timer = ref('01:00:00')
-let remainingSeconds = 3600 
-let intervalId: number | null = null
+const jobTitle = computed(() => {
+  if (!assessmentStore.selectedSubject || !assessmentStore.selectedSubject.trim()) {
+    return 'IT-специалист'
+  }
 
+  const subjectMap: Record<string, string> = {
+    'Algorithms': 'Алгоритмы',
+    'OOP': 'Объектно-ориентированное программирование',
+    'Data Structures': 'Структура данных',
+    'Databases': 'База данных',
+    'System Design': 'Системный архитектор',
+    'Testing': 'Тестировщик',
+  }
+
+  const prefix = subjectMap[assessmentStore.selectedSubject] || 'Software'
+  return prefix
+})
+
+const jobGrade = computed<'Junior' | 'Middle' | 'Senior'>(() => {
+  return assessmentStore.skillLevel ?? 'Junior'
+})
+
+const timer = ref('01:00:00')
+let intervalId: number | null = null
+let INITIAL_DURATION = 3600 
+
+// Расчет оставшегося времени
+function getRemainingSeconds(): number {
+  if (!assessmentStore.timerStartTimestamp) {
+    return INITIAL_DURATION
+  }
+  const elapsedMs = Date.now() - assessmentStore.timerStartTimestamp
+  const elapsedSeconds = Math.floor(elapsedMs / 1000)
+  return Math.max(0, INITIAL_DURATION - elapsedSeconds)
+}
+
+// Формат времени
 function formatTime(sec: number) {
   const h = String(Math.floor(sec / 3600)).padStart(2, '0')
   const m = String(Math.floor((sec % 3600) / 60)).padStart(2, '0')
@@ -34,22 +70,32 @@ function formatTime(sec: number) {
   return `${h}:${m}:${s}`
 }
 
-onMounted(() => {
-    timer.value = formatTime(remainingSeconds)
+// Update таймера, вызывается каждую сек
+function updateTimer(): void {
+  const remaining = getRemainingSeconds()
+  timer.value = formatTime(remaining)
 
-    intervalId = window.setInterval(() => {
-        if (remainingSeconds > 0) {
-            remainingSeconds--
-            timer.value = formatTime(remainingSeconds)
-        } else {
-            if (intervalId) clearInterval(intervalId)
-        }
-    }, 1000)
+  if (remaining <= 0) {
+    if (intervalId) {
+      clearInterval(intervalId)
+      intervalId = null
+      // endSession()
+    }
+  }
+}
+
+onMounted(() => {
+  updateTimer()
+
+  // Интвервал в секунду, обновленеи ui + проверка завершения 
+  intervalId = window.setInterval(updateTimer, 1000)
 })
 
 onUnmounted(() => {
   if (intervalId) clearInterval(intervalId)
 })
+
+watch([currentTask, assessmentStore.timerStartTimestamp], updateTimer)
 </script>
 
 <style scoped lang="scss">
