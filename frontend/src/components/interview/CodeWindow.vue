@@ -170,11 +170,21 @@ const STATUS_MESSAGES = {
     ERROR: 'Ошибка сети'
 } as const;
 
+const templates: Record<Language, string> = {
+    javascript: `console.log('Hello JS');`,
+    typescript: `const greeting: string = 'Hello TS';\nconsole.log(greeting);`,
+    python: `print("Hello Python")`,
+    java: `public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello Java");\n    }\n}`,
+    cpp: `#include <iostream>\n\nint main() {\n    std::cout << "Hello C++" << std::endl;\n    return 0;\n}`,
+    go: `package main\n\nimport "fmt"\n\nfunc main() {\n    fmt.Println("Hello Go")\n}`,
+    kotlin: `fun main() {\n    println("Hello Kotlin")\n}`
+};
+
 type StatusMessage = typeof STATUS_MESSAGES[keyof typeof STATUS_MESSAGES];
 
-const code = ref<string>('print("Hello World")');
-
 const selectedLanguage = ref<Language>('python');
+const code = ref<string>(templates[selectedLanguage.value]);
+
 const selectedTheme = ref<string>('vs'); // по факту const, можем добавить больше тем в будущем если также внедрим их для всей страницы
 
 const submitionAttempts = ref<number>(0);
@@ -190,16 +200,6 @@ const editorOptions = {
     wordWrap: 'on',               // перенос длинных строк
     renderValidationDecorations: 'on',
 }
-
-const templates: Record<Language, string> = {
-    javascript: `console.log('Hello JS');`,
-    typescript: `const greeting: string = 'Hello TS';\nconsole.log(greeting);`,
-    python: `print("Hello Python")`,
-    java: `public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello Java");\n    }\n}`,
-    cpp: `#include <iostream>\n\nint main() {\n    std::cout << "Hello C++" << std::endl;\n    return 0;\n}`,
-    go: `package main\n\nimport "fmt"\n\nfunc main() {\n    fmt.Println("Hello Go")\n}`,
-    kotlin: `fun main() {\n    println("Hello Kotlin")\n}`
-};
 
 const passedStatusClass = computed((): string => {
     switch (passedStatus.value) {
