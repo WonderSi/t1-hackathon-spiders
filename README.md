@@ -1,6 +1,6 @@
 <div align="center">
   
-# t1-hakaton-spiders · VibeCode Jam: собеседование будущего
+# t1-hackathon-spiders · VibeCode Jam: собеседование будущего
 
 <div align="start">
 Создайте ИИ-платформу для прохождения технических собеседований с виртуальным интервьюером.
