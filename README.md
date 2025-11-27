@@ -25,13 +25,56 @@ cd t1-hackathon-spiders
 
 ####
 
-```
+Установить .NET 9.0 SDK
+https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/sdk-9.0.308-windows-x64-installer
+
+Установить .NET 9.0 Runtime
+https://dotnet.microsoft.com/ru-ru/download/dotnet/thank-you/runtime-9.0.11-windows-x64-installer?cid=getdotnetcore
+
+Запустить Docker
+
+Установить образы для запуска языков программирования
 
 ```
+docker pull python:3.11-slim
+docker pull node:18-alpine
+```
 
-Управление будет доступно по адресу: 
+Установить сертификат безопасности
 
----
+```
+dotnet dev-certs https --trust
+```
+
+Собрать решение и запустить проект
+
+```
+cd backend
+cd LLMService
+
+dotnet build
+dotnet run --launch-profile https
+```
+
+Управление LLM сервисом будет доступно по адресу: 
+
+https://localhost:7213
+http://localhost:5085
+
+Запуск кода в контейнере производится отдельно
+
+```
+cd backend
+cd CodeExecutionService
+
+dotnet build
+dotnet run --launch-profile https
+```
+
+Управление CodeExecutionService сервисом будет доступно по адресу:
+
+https://localhost:7016
+http://localhost:5064
 
 ### 3. Запуск FrontEnd
 
