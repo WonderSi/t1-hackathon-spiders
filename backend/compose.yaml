@@ -29,3 +29,9 @@
       context: .
       dockerfile: LLMService/Dockerfile
 
+  codeexecutionservice:
+    image: codeexecutionservice
+    build:
+      context: .
+      dockerfile: CodeExecutionService/Dockerfile
+

@@ -11,4 +11,7 @@ public interface ILLMService
     Task<float> CalculateAdaptiveDifficultyAsync(AdaptiveDifficultyRequest request);
     Task<string> DetermineCandidateGradeAsync(string sessionId);
     Task<bool> DetectPlagiarismAsync(string code, string taskId);
+    Task<string> GenerateFeedbackAsync(string taskDescription, string solution, float score, string language);
+    Task<float> GetNextTaskDifficultyAsync(string sessionId);
+    Task<string> RespondToCandidateQuestionAsync(string question, string taskDescription, string currentSolutionSoFar);
 }

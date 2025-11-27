@@ -30,12 +30,8 @@ public class LLMController(ILLMService llmService, ILogger<LLMController> logger
     {
         try
         {
-            // ✅ Теперь передаём и taskId, и сложность задачи (если известна)
-            // В реальном сценарии, сложность задачи должна быть передана от InterviewService
-            // или извлекаться из сессии.
-            // Для упрощения, предположим, что сложность передаётся.
             var score = await llmService.AssessSolutionAsync(request.TaskDescription, request.Solution, request.Language);
-            // НЕТУ БОЛЬШЕ вызова CalculateAdaptiveDifficultyAsync здесь, если вы хотите отделить оценку и адаптацию
+            
             return Ok(score);
         }
         catch (Exception ex)
@@ -50,10 +46,8 @@ public class LLMController(ILLMService llmService, ILogger<LLMController> logger
     {
         try
         {
-            // 1. Оценить решение
             var score = await llmService.AssessSolutionAsync(request.TaskDescription, request.Solution, request.Language);
 
-            // 2. Обновить адаптивность (передаём сложность задачи, на которой получили оценку)
             var adaptiveRequest = new AdaptiveDifficultyRequest
             {
                 SessionId = request.SessionId,
@@ -125,6 +119,51 @@ public class LLMController(ILLMService llmService, ILogger<LLMController> logger
         {
             logger.LogError(ex, "Error detecting plagiarism for task: {TaskId}", request.TaskId);
             return StatusCode(500, new { error = "Internal server error during plagiarism check." });
+        }
+    }
+    
+    [HttpPost("generate-feedback")]
+    public async Task<ActionResult<string>> GenerateFeedback([FromBody] FeedbackGenerationRequest request)
+    {
+        try
+        {
+            var feedback = await llmService.GenerateFeedbackAsync(request.TaskDescription, request.Solution, request.Score, request.Language);
+            return Ok(feedback);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error generating feedback for task: {TaskId}", request.TaskId);
+            return StatusCode(500, new { error = "Internal server error during feedback generation." });
+        }
+    }
+
+    [HttpGet("next-task-difficulty/{sessionId}")]
+    public async Task<ActionResult<float>> GetNextTaskDifficulty(string sessionId)
+    {
+        try
+        {
+            var difficulty = await llmService.GetNextTaskDifficultyAsync(sessionId);
+            return Ok(difficulty);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error getting next task difficulty for session: {SessionId}", sessionId);
+            return StatusCode(500, new { error = "Internal server error during difficulty retrieval." });
+        }
+    }
+
+    [HttpPost("interviewer-chat")]
+    public async Task<ActionResult<string>> InterviewerChat([FromBody] InterviewerChatRequest request)
+    {
+        try
+        {
+            var answer = await llmService.RespondToCandidateQuestionAsync(request.Question, request.TaskDescription, request.CurrentSolution);
+            return Ok(answer);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error responding to candidate question for task: {TaskId}", request.TaskId);
+            return StatusCode(500, new { error = "Internal server error during chat response." });
         }
     }
 }

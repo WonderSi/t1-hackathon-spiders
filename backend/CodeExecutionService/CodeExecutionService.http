@@ -1,0 +1,6 @@
+@CodeExecutionService_HostAddress = http://localhost:5064
+
+GET {{CodeExecutionService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "APIGateway", "APIGateway\AP
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LLMService", "LLMService\LLMService.csproj", "{7C7E897A-B8A7-4D71-B6B3-EE54FB572F45}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodeExecutionService", "CodeExecutionService\CodeExecutionService.csproj", "{9EEB22E0-578A-4249-B3C4-7696D97E8A74}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,5 +37,9 @@ Global
 		{7C7E897A-B8A7-4D71-B6B3-EE54FB572F45}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7C7E897A-B8A7-4D71-B6B3-EE54FB572F45}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7C7E897A-B8A7-4D71-B6B3-EE54FB572F45}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9EEB22E0-578A-4249-B3C4-7696D97E8A74}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9EEB22E0-578A-4249-B3C4-7696D97E8A74}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9EEB22E0-578A-4249-B3C4-7696D97E8A74}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9EEB22E0-578A-4249-B3C4-7696D97E8A74}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
