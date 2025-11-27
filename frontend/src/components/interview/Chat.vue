@@ -124,7 +124,7 @@ const restoreMessagesFromLocalStorage  = (): boolean => {
   try {
     const savedMessages = localStorage.getItem(CHAT_STORAGE_KEY);
     if (!savedMessages) {
-      console.log('ℹНет сохраненного state задач');
+      console.log('Нет сохраненного state задач');
       return false;
     }
 
