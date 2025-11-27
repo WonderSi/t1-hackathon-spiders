@@ -3,16 +3,7 @@
         <div class="code-window-header">
             <div class="header-controls">
                 <label>
-                    Язык:
-                    <select v-model="selectedLanguage" @change="onLanguageChange">
-                        <option value="javascript">JavaScript</option>
-                        <option value="typescript">TypeScript</option>
-                        <option value="kotlin">Kotlin</option>
-                        <option value="java">Java</option>
-                        <option value="python">Python</option>
-                        <option value="cpp">C++</option>
-                        <option value="go">Go</option>
-                    </select>
+                    Язык: <strong>{{ assessmentStore.programmingLanguage }}</strong>
                 </label>
                 <div class="timer">
                     <div v-if="startTime" class="timer-display" :class="{ 'timer-active': isTracking }">
@@ -78,6 +69,7 @@ import { useAntiCheat } from '@/composables/useAntiCheat'
 import { useSolutionTimer } from '@/composables/useSolutionTimer'
 import AntiCheatWarning from './AntiCheatWarning.vue'
 import { analyzeCodeOriginality } from '@/utils/codeAnalysis'
+import { useAssessmentStore } from '@/stores/assessment'
 
 self.MonacoEnvironment = {
   getWorker(_, label) {
@@ -125,6 +117,20 @@ const emit = defineEmits<{
 
 // ============ TYPES & CONSTANTS ============
 
+const languageMap: Record<string, Language> = {
+    'JavaScript': 'javascript',
+    'TypeScript': 'typescript',
+    'Kotlin': 'kotlin',
+    'Java': 'java',
+    'Python': 'python',
+    'C++': 'cpp',
+    'Go': 'go'
+};
+
+const getNormalizedLanguage = (input: string): Language => {
+    return languageMap[input] || 'javascript'; 
+}
+
 type Language = 'javascript' | 'typescript' | 'kotlin' | 'java' | 'kotlin' | 'python' | 'cpp' | 'go';
 
 const STATUS_MESSAGES = {
@@ -156,14 +162,16 @@ const editorOptions = {
     renderValidationDecorations: 'on',
 }
 
+const assessmentStore = useAssessmentStore();
+
 // ============ STATE ============
 
 const { metrics, violations, registerPaste, analyzeInputPattern } = useAntiCheat()
 const { startTimer, stopTimer, resetTimer, startTime, isTracking, formattedTime } = useSolutionTimer()
 
-const editorInstance = ref<any>(null)
+const editorInstance = ref<any>(null);
 
-const selectedLanguage = ref<Language>('javascript');
+const selectedLanguage = ref<Language>(getNormalizedLanguage(assessmentStore.programmingLanguage));
 const code = ref<string>(templates[selectedLanguage.value]);
 const selectedTheme = ref<string>('vs'); // по факту const, можем добавить больше тем в будущем если также внедрим их для всей страницы
 
@@ -223,17 +231,6 @@ const onEditorMount = (editor: any) => {
         }
         analyzeInputPattern(textLength)   
     })
-}
-
-const onLanguageChange = (): void => {
-    passedStatus.value = STATUS_MESSAGES.IDLE;
-
-    const currentCodeIsTemplate = Object.values(templates).includes(code.value);
-    const codeIsEmpty = !code.value || !code.value.trim();
-
-    if (codeIsEmpty || currentCodeIsTemplate) {
-        code.value = templates[selectedLanguage.value || ''];
-    }
 }
 
 const onCodeChange = (value?: string): void => {
