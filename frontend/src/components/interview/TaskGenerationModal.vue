@@ -193,7 +193,7 @@ const handleSubmit = async (): Promise<void> => {
 
     if (currentTask.value) {
       console.log('Первая задача сгенерирована:', currentTask.value.taskId);
-      
+      assessmentStore.startTimer();
       // 3. Успешно - закрываем модальное окно
       emit('success');
       resetForm();

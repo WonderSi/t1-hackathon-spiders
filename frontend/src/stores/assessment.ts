@@ -166,7 +166,6 @@ export const useAssessmentStore = defineStore('assessment', () => {
     console.log(`Язык: ${language}, Тема: ${subject}, Режим: ${mode}`);
 
     // Сохраняем в localStorage для восстановления после перезагрузки
-    startTimer()
     saveSessionToLocalStorage();
   };
 

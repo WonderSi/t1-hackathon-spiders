@@ -16,11 +16,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import AttachedFile from '../AttachedFile.vue'
 import { useAssessmentStore } from '@/stores/assessment'
+import { useTasks } from '@/composables/useTasks'
 
 const assessmentStore = useAssessmentStore()
+const { currentTask } = useTasks()
 
 const companyName = 'Т1'
 
@@ -83,11 +85,6 @@ function updateTimer(): void {
 }
 
 onMounted(() => {
-  // start?
-  if (assessmentStore.hasActiveSession && !assessmentStore.timerStartTimestamp) {
-    assessmentStore.startTimer()
-  }
-
   updateTimer()
 
   // Интвервал в секунду, обновленеи ui + проверка завершения 
@@ -97,6 +94,8 @@ onMounted(() => {
 onUnmounted(() => {
   if (intervalId) clearInterval(intervalId)
 })
+
+watch([currentTask, assessmentStore.timerStartTimestamp], updateTimer)
 </script>
 
 <style scoped lang="scss">
