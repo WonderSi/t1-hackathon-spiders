@@ -132,8 +132,7 @@ public class LLMService : ILLMService
                     newDifficulty -= 0.3f; // Понизить сложность
                     break;
             }
-
-            // Ограничить диапазон
+            
             newDifficulty = Math.Max(1.0f, Math.Min(5.0f, newDifficulty));
 
             // Сохраняем новую сложность для сессии
@@ -206,8 +205,7 @@ public class LLMService : ILLMService
                 return false;
 
             var currentEmbedding = embeddingResponse.Data[0].Embedding;
-
-            // Получаем известные эмбеддинги для этой задачи
+            
             var knownEmbeddings = await GetKnownEmbeddingsForTask(taskId);
 
             foreach (var knownEmbedding in knownEmbeddings)
@@ -219,15 +217,67 @@ public class LLMService : ILLMService
                     return true;
                 }
             }
-
-            // Если плагиат не найден, сохраняем текущий эмбеддинг для будущих проверок
+            
             await StoreCodeEmbedding(taskId, currentEmbedding);
 
             return false;
         }
+        
+        public async Task<string> GenerateFeedbackAsync(string taskDescription, string solution, float score, string language)
+        {
+            var model = _configuration["Scibox:Models:General"];
+            var messages = new List<ChatMessage>
+            {
+                new ChatMessage("system", "/no_think Ты — технический эксперт, который даёт обратную связь кандидату. Проанализируй его решение. Укажи сильные и слабые стороны, возможные улучшения. Не выдавай готовое решение. Ответь кратко, на русском языке."),
+                new ChatMessage("user", $"Задача: {taskDescription}\n\nРешение на {language}:\n{solution}\n\nОценка: {score}/5.0. Дай обратную связь.")
+            };
 
-        // --- Вспомогательные методы ---
+            var sciboxRequest = new ChatCompletionRequest
+            {
+                Model = model,
+                Messages = messages,
+                Temperature = 0.5,
+                MaxTokens = 300
+            };
 
+            var response = await _sciboxClient.ChatCompletionAsync(sciboxRequest);
+
+            var feedback = response.Choices[0].Message.Content;
+            return feedback ?? "Обратная связь недоступна.";
+        }
+
+        public async Task<float> GetNextTaskDifficultyAsync(string sessionId)
+        {
+            if (_sessionDifficulty.TryGetValue(sessionId, out var difficulty))
+                return difficulty;
+
+            // Если сессия новая, вернуть начальный уровень
+            return 2.5f; // или другой начальный уровень
+        }
+
+        public async Task<string> RespondToCandidateQuestionAsync(string question, string taskDescription, string currentSolutionSoFar)
+        {
+            var model = _configuration["Scibox:Models:General"];
+            var messages = new List<ChatMessage>
+            {
+                new ChatMessage("system", "/no_think Ты — ИИ-интервьюер. Отвечай на вопросы кандидата по задаче. Помогай понять условие, объясняй концепции, даёшь подсказки. НЕЛЬЗЯ писать код, НЕЛЬЗЯ давать готовые решения, НЕЛЬЗЯ показывать примеры реализации. Говори только словами. Отвечай на русском языке."),
+                new ChatMessage("user", $"Задача: {taskDescription}\n\nТекущее решение кандидата: {currentSolutionSoFar}\n\nВопрос кандидата: {question}\n\nОтветь кандидату.")
+            };
+
+            var sciboxRequest = new ChatCompletionRequest
+            {
+                Model = model,
+                Messages = messages,
+                Temperature = 0.7,
+                MaxTokens = 200
+            };
+
+            var response = await _sciboxClient.ChatCompletionAsync(sciboxRequest);
+
+            var answer = response.Choices[0].Message.Content;
+            return answer ?? "Не удалось обработать вопрос.";
+        }
+        
         private string ExtractExample(string text, params string[] keywords)
         {
             foreach (var keyword in keywords)
@@ -245,13 +295,11 @@ public class LLMService : ILLMService
 
         private async Task<List<List<double>>> GetKnownEmbeddingsForTask(string taskId)
         {
-            // Для MVP: возвращаем список из памяти
             return _codeEmbeddings.TryGetValue(taskId, out var embeddings) ? embeddings : new List<List<double>>();
         }
 
         private async Task StoreCodeEmbedding(string taskId, List<double> embedding)
         {
-            // Для MVP: сохраняем в память
             if (!_codeEmbeddings.ContainsKey(taskId))
                 _codeEmbeddings[taskId] = new List<List<double>>();
             
