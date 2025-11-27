@@ -5,6 +5,19 @@
                 <label>
                     Язык: <strong>{{ assessmentStore.programmingLanguage }}</strong>
                 </label>
+
+                <div class="progress-container" title="Прогресс выполнения задач">
+                    <div class="progress-label">
+                        {{ assessmentStore.totalTasks }} / 10
+                    </div>
+                    <div class="progress-track">
+                        <div 
+                            class="progress-fill" 
+                            :style="{ width: `${assessmentStore.progressPercentage}%` }"
+                        ></div>
+                    </div>
+                </div>
+
                 <div class="timer">
                     <div v-if="startTime" class="timer-display" :class="{ 'timer-active': isTracking }">
                     <svg width="18" height="21" viewBox="0 0 18 21" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -64,6 +77,7 @@ import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
 
 import { ref, computed, watch } from 'vue'
 import { CodeEditor, type EditorOptions } from 'monaco-editor-vue3'
+import { defineStore } from 'pinia';
 
 import { useAntiCheat } from '@/composables/useAntiCheat'
 import { useSolutionTimer } from '@/composables/useSolutionTimer'
@@ -111,8 +125,8 @@ interface SubmitPayload {
 }
 
 const emit = defineEmits<{
-  submit: [payload: SubmitPayload];
-  statusChange: [status: StatusMessage];
+    submit: [payload: SubmitPayload];
+    statusChange: [status: StatusMessage];
 }>();
 
 // ============ TYPES & CONSTANTS ============
@@ -400,6 +414,35 @@ defineExpose({
         font-weight: 900;
         box-shadow: $shadow;
         color: $clr-light-main;
+    }
+
+    // progress bar
+    .progress-container {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 100px; 
+    }
+    .progress-label {
+        font-family: $font-mono;
+        font-size: $font-size-base;
+        font-weight: 600;
+        color: $clr-light-main;
+        white-space: nowrap;
+    }
+    .progress-track {
+        flex: 1;
+        height: 8px;
+        background-color: rgba($clr-light-accent, 0.3);
+        border-radius: 4px;
+        overflow: hidden;
+        min-width: 80px;
+    }
+    .progress-fill {
+        height: 100%;
+        background-color: $clr-light-accent;
+        border-radius: 4px;
+        transition: width 0.5s ease-out;
     }
 }
 
