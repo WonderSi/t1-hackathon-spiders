@@ -71,6 +71,8 @@ export const useAssessmentStore = defineStore('assessment', () => {
   // ID выбранного сценария (если режим = 'scenario')
   const selectedScenarioId = ref<string | null>(null);
 
+  const skillLevel = ref<SkillLevel | null>(null);
+
   // ============ GETTERS ============
 
   // Общее количество решённых задач
@@ -143,6 +145,7 @@ export const useAssessmentStore = defineStore('assessment', () => {
   const startSession = (
     language: string,
     subject: string,
+    skillLevelParam: SkillLevel,
     mode: 'llm' | 'scenario' = 'llm',
     scenarioId: string | null = null
   ): void => {
@@ -150,6 +153,7 @@ export const useAssessmentStore = defineStore('assessment', () => {
     sessionId.value = crypto.randomUUID();
     programmingLanguage.value = language;
     selectedSubject.value = subject;
+    skillLevel.value = skillLevelParam;
     interviewMode.value = mode;
     selectedScenarioId.value = scenarioId;
     currentDifficulty.value = 2.0; // Начальная сложность
@@ -343,6 +347,7 @@ const determineFinalGrade = async (): Promise<CandidateGrade | null> => {
     selectedSubject.value = 'Algorithms';
     interviewMode.value = 'llm';
     selectedScenarioId.value = null;
+    skillLevel.value = null;
 
     localStorage.removeItem('current_session');
     console.log('  Store сброшен');
@@ -359,6 +364,7 @@ const determineFinalGrade = async (): Promise<CandidateGrade | null> => {
       selectedSubject: selectedSubject.value,
       interviewMode: interviewMode.value,
       selectedScenarioId: selectedScenarioId.value,
+      skillLevel: skillLevel.value,
     };
 
     localStorage.setItem('current_session', JSON.stringify(sessionData));
@@ -382,6 +388,7 @@ const determineFinalGrade = async (): Promise<CandidateGrade | null> => {
       selectedSubject.value = data.selectedSubject;
       interviewMode.value = data.interviewMode;
       selectedScenarioId.value = data.selectedScenarioId;
+      skillLevel.value = data.skillLevel;
 
       console.log('  Сессия восстановлена:', sessionId.value);
       return true;
@@ -403,6 +410,7 @@ const determineFinalGrade = async (): Promise<CandidateGrade | null> => {
     selectedSubject,
     interviewMode,
     selectedScenarioId,
+    skillLevel,
 
     // Getters
     totalTasks,
